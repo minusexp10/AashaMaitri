@@ -80,27 +80,3 @@ exports.login = async (req, res) => {
                 })
     }
 }
-
-exports.add_patients = async(req, res) =>{
-    try{
-        const {asha_id} = req.user;
-        
-    } catch(error){
-        console.log(error)
-        res.status(500).json({message:"Cannot add patients"})
-    }
-}
-
-exports.get_patients = async(req, res) =>{
-    try{
-        const {asha_id} = req.body;
-        const [rows] = await pool.query(
-            "SELECT * FROM PATIENT WHERE ASHA_ID = ?",
-            [asha_id]
-        )
-        res.status(200).json(rows[0])
-    } catch(error){
-        console.log(error)
-        res.status(500).json({message:"Unable to fetch patients"})
-    }
-}

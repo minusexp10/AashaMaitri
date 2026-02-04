@@ -6,8 +6,6 @@ const {signup, login, get_patients, add_patients} = require('../controller/authC
 
 router.post('/signup' , signup)
 router.post('/login', login)
-router.get('/get_patients', get_patients)
-router.post('/add_patient', add_patients)
 
 // router.get('/me', auth , (req, res) =>{
 //     res.status(200).json({message:"granted", user:req.user})
