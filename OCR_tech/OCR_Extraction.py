@@ -30,44 +30,41 @@ def confidence(found, valid, had_comma=False):
 def extract_number_anchor(text, keyword_list, lookahead=6):
     words = text.split()
 
-    print("\n==============================")
-    print("[DEBUG] TEXT:", text)
-    print("[DEBUG] WORD TOKENS:", words)
-    print("[DEBUG] KEYWORD LIST:", keyword_list)
-
-    keyword_tokens = [kw.split() for kw in keyword_list]
-    print("[DEBUG] KEYWORD TOKENS:", keyword_tokens)
-
+    keyword_tokens = [normalize_text(kw).split() for kw in keyword_list]
 
     for tokens in keyword_tokens:
         n = len(tokens)
-        print(f"\n[DEBUG] Trying keyword tokens: {tokens}")
 
-        for i in range(len(words) - n):
-            # Match full keyword (single or multi-word)
-            window = words[i:i+n]
-            print(f"[DEBUG] Comparing window {window} at index {i}")
+        for i in range(len(words) - n + 1):
+            # 1️⃣ Match keyword (single or multi-word)
             if words[i:i+n] == tokens:
-                print(f"[MATCH FOUND] Keyword matched at index {i}")
-                parts = []
-                print("[DEBUG] Reading numbers after keyword...")
 
-                # Extract numbers AFTER the full keyword
+                parts = []
+                started = False  # 🔥 NEW: track numeric start
+
+                # 2️⃣ Scan forward AFTER keyword
                 for w in words[i+n:i+n+lookahead]:
-                    print(f"[DEBUG] Checking token: {w}")
+
+                    # If numeric → start / continue collecting
                     if re.fullmatch(r"\d+(\.\d+)?", w):
                         parts.append(w)
-                        print(f"[DEBUG] Added numeric token: {w}")
-                    else:
-                        print(f"[DEBUG] Stopped at non-numeric token: {w}")
-                        break
-                print("[DEBUG] Collected number parts:", parts)
+                        started = True
+                        continue
+
+                    # 🔥 NEW: skip garbage BEFORE number starts
+                    if not started:
+                        continue
+
+                    # Existing behavior: stop once number collection ends
+                    break
+
                 if parts:
                     value = float("".join(parts))
                     noisy = len(parts) > 1
                     return value, True, noisy
 
     return None, False, False
+
 
 
 def safe_update(base, new):
@@ -116,7 +113,7 @@ def extract_cbc(text):
     # Hemoglobin
     hb, found, had_comma = extract_number_anchor(
         text,
-        ["hemoglobin", "hb", "haemoglobin",]
+        ["hemoglobin", "hb", "haemoglobin", "Hgb","hgb concentration", "mass concentration of hemoglobin"]
     )
     valid = hb is not None and 3 <= hb <= 20
     conf = confidence(found, valid, had_comma)
@@ -128,7 +125,7 @@ def extract_cbc(text):
     # WBC
     wbc, found, had_comma = extract_number_anchor(
         text,
-        ["wbc", "leukocyte","total leukocyte count"]
+        ["wbc", "leukocyte","total leukocyte count","wbc count","white blood cell count","leukocycte count","tlc"]
     )
     valid = wbc is not None and 1000 <= wbc <= 30000
     conf = confidence(found, valid, had_comma)
@@ -140,7 +137,7 @@ def extract_cbc(text):
     # RBC
     rbc, found, had_comma = extract_number_anchor(
         text,
-        ["rbc",  "erythrocyte","total rbc count"]
+        ["rbc","erythrocyte","total rbc count","rbc count","red blood cell count", "erythrocyte count"]
     )
     valid = rbc is not None and 2 <= rbc <= 7
     conf = confidence(found, valid, had_comma)
@@ -152,7 +149,7 @@ def extract_cbc(text):
     # Platelets
     platelets, found, had_comma = extract_number_anchor(
         text,
-        ["platelet", "plt", "platelets","platelet count"]
+        ["platelet", "plt", "platelets","platelet count","plt Count","thrombocyte count","mpv"]
     )
     platelets = normalize_platelets(platelets, text)
     valid = platelets is not None and 150 <= platelets <= 400
@@ -165,7 +162,7 @@ def extract_cbc(text):
     # HCT
     hct, found, had_comma = extract_number_anchor(
         text,
-        ["hct", "hematocrit", "pcv"]
+        ["hct", "hematocrit", "pcv","crit","evf"]
     )
     valid = hct is not None and 20 <= hct <= 60
     conf = confidence(found, valid, had_comma)
