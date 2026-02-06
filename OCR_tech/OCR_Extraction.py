@@ -14,9 +14,11 @@ def normalize_text(text: str) -> str:
 # --------------------------------------------------
 # CONFIDENCE LOGIC
 # --------------------------------------------------
-def confidence(found: bool, valid: bool):
-    if found and valid:
+def confidence(found, valid, had_comma=False):
+    if found and valid and not had_comma:
         return "HIGH"
+    if found and valid and had_comma:
+        return "MEDIUM"
     if found and not valid:
         return "MEDIUM"
     return "LOW"
@@ -25,31 +27,58 @@ def confidence(found: bool, valid: bool):
 # --------------------------------------------------
 # SAFE NUMBER EXTRACTION (COLLISION-PROOF)
 # --------------------------------------------------
-def extract_number_anchor(text, keywords, window=40):
-    for kw in keywords:
-        idx = text.find(kw)
-        if idx == -1:
-            continue
+def extract_number_anchor(text, keyword_list, lookahead=6):
+    words = text.split()
 
-        snippet = text[idx : idx + window]
+    print("\n==============================")
+    print("[DEBUG] TEXT:", text)
+    print("[DEBUG] WORD TOKENS:", words)
+    print("[DEBUG] KEYWORD LIST:", keyword_list)
 
-        # Cut reference ranges
-        snippet = re.split(r"normal range|reference|range| to |-", snippet)[0]
-
-        # Match numbers WITH commas
-        numbers = re.findall(
-            r"\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+\.\d+|\d+",
-            snippet
-        )
-
-        if numbers:
-            clean = numbers[0].replace(",", "")
-            return float(clean), True
-
-    return None, False
+    keyword_tokens = [kw.split() for kw in keyword_list]
+    print("[DEBUG] KEYWORD TOKENS:", keyword_tokens)
 
 
+    for tokens in keyword_tokens:
+        n = len(tokens)
+        print(f"\n[DEBUG] Trying keyword tokens: {tokens}")
 
+        for i in range(len(words) - n):
+            # Match full keyword (single or multi-word)
+            window = words[i:i+n]
+            print(f"[DEBUG] Comparing window {window} at index {i}")
+            if words[i:i+n] == tokens:
+                print(f"[MATCH FOUND] Keyword matched at index {i}")
+                parts = []
+                print("[DEBUG] Reading numbers after keyword...")
+
+                # Extract numbers AFTER the full keyword
+                for w in words[i+n:i+n+lookahead]:
+                    print(f"[DEBUG] Checking token: {w}")
+                    if re.fullmatch(r"\d+(\.\d+)?", w):
+                        parts.append(w)
+                        print(f"[DEBUG] Added numeric token: {w}")
+                    else:
+                        print(f"[DEBUG] Stopped at non-numeric token: {w}")
+                        break
+                print("[DEBUG] Collected number parts:", parts)
+                if parts:
+                    value = float("".join(parts))
+                    noisy = len(parts) > 1
+                    return value, True, noisy
+
+    return None, False, False
+
+
+def safe_update(base, new):
+    for key, value in new.items():
+        if key not in base:
+            base[key] = value
+        else:
+            # Do not overwrite existing valid values
+            if base[key]["value"] is None and value["value"] is not None:
+                base[key] = value
+    return base
 
 # --------------------------------------------------
 # UNIT NORMALIZATION
@@ -57,9 +86,17 @@ def extract_number_anchor(text, keywords, window=40):
 def normalize_platelets(value, text):
     if value is None:
         return None
+
+    # Indian format: "1.8 lakh"
     if "lakh" in text:
         return value * 100
+
+    # Standard lab format: 180000 → 180
+    if value > 1000:
+        return value / 1000
+
     return value
+
 
 
 def normalize_fetal_fraction(value):
@@ -76,28 +113,69 @@ def normalize_fetal_fraction(value):
 def extract_cbc(text):
     data = {}
 
-    hb, found = extract_number_anchor(text, ["hemoglobin", "hb", "haemoglobin","Hemoglobin"])
+    # Hemoglobin
+    hb, found, had_comma = extract_number_anchor(
+        text,
+        ["hemoglobin", "hb", "haemoglobin",]
+    )
     valid = hb is not None and 3 <= hb <= 20
-    data["hemoglobin"] = {"value": hb if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
+    data["hemoglobin"] = {
+        "value": hb if valid else None,
+        "confidence": conf
+    }
 
-    wbc, found = extract_number_anchor(text, ["wbc", "white blood", "leukocyte"])
+    # WBC
+    wbc, found, had_comma = extract_number_anchor(
+        text,
+        ["wbc", "leukocyte","total leukocyte count"]
+    )
     valid = wbc is not None and 1000 <= wbc <= 30000
-    data["wbc"] = {"value": wbc if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
+    data["wbc"] = {
+        "value": wbc if valid else None,
+        "confidence": conf
+    }
 
-    rbc, found = extract_number_anchor(text, ["rbc", "red blood", "erythrocyte","RBC Count"])
+    # RBC
+    rbc, found, had_comma = extract_number_anchor(
+        text,
+        ["rbc",  "erythrocyte","total rbc count"]
+    )
     valid = rbc is not None and 2 <= rbc <= 7
-    data["rbc"] = {"value": rbc if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
+    data["rbc"] = {
+        "value": rbc if valid else None,
+        "confidence": conf
+    }
 
-    platelets, found = extract_number_anchor(text, ["platelet", "plt","platelets"])
+    # Platelets
+    platelets, found, had_comma = extract_number_anchor(
+        text,
+        ["platelet", "plt", "platelets","platelet count"]
+    )
     platelets = normalize_platelets(platelets, text)
-    valid = platelets is not None and 50 <= platelets <= 600
-    data["platelets"] = {"value": platelets if valid else None, "confidence": confidence(found, valid)}
+    valid = platelets is not None and 150 <= platelets <= 400
+    conf = confidence(found, valid, had_comma)
+    data["platelets"] = {
+        "value": platelets if valid else None,
+        "confidence": conf
+    }
 
-    hct, found = extract_number_anchor(text, ["hct", "hematocrit", "pcv"])
+    # HCT
+    hct, found, had_comma = extract_number_anchor(
+        text,
+        ["hct", "hematocrit", "pcv"]
+    )
     valid = hct is not None and 20 <= hct <= 60
-    data["hct"] = {"value": hct if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
+    data["hct"] = {
+        "value": hct if valid else None,
+        "confidence": conf
+    }
 
     return data
+
 
 
 # --------------------------------------------------
@@ -106,13 +184,29 @@ def extract_cbc(text):
 def extract_glucose_tsh(text):
     data = {}
 
-    glucose, found = extract_number_anchor(text, ["blood glucose", "glucose"])
+    # Blood Glucose
+    glucose, found, had_comma = extract_number_anchor(
+        text,
+        ["blood glucose", "glucose"]
+    )
     valid = glucose is not None and 60 <= glucose <= 300
-    data["blood_glucose"] = {"value": glucose if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
+    data["blood_glucose"] = {
+        "value": glucose if valid else None,
+        "confidence": conf
+    }
 
-    tsh, found = extract_number_anchor(text, ["tsh", "thyroid stimulating hormone"])
+    # TSH
+    tsh, found, had_comma = extract_number_anchor(
+        text,
+        ["tsh", "thyroid stimulating hormone"]
+    )
     valid = tsh is not None and 0.01 <= tsh <= 20
-    data["tsh"] = {"value": tsh if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
+    data["tsh"] = {
+        "value": tsh if valid else None,
+        "confidence": conf
+    }
 
     return data
 
@@ -123,11 +217,21 @@ def extract_glucose_tsh(text):
 def extract_nipt(text):
     data = {}
 
-    ff, found = extract_number_anchor(text, ["fetal fraction", "ff"])
+    # Fetal Fraction
+    ff, found, had_comma = extract_number_anchor(
+        text,
+        ["fetal fraction", "ff"]
+    )
     ff = normalize_fetal_fraction(ff)
     valid = ff is not None and 0 <= ff <= 1
-    data["fetal_fraction"] = {"value": ff if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
 
+    data["fetal_fraction"] = {
+        "value": ff if valid else None,
+        "confidence": conf
+    }
+
+    # Trisomy extraction (unchanged – rule based)
     def extract_trisomy(name):
         pattern = rf"{name}.*?(positive|negative|detected|not detected|high risk|low risk)"
         match = re.search(pattern, text)
@@ -139,10 +243,12 @@ def extract_nipt(text):
 
     for t in ["trisomy 21", "trisomy 18", "trisomy 13"]:
         value, conf = extract_trisomy(t)
-        data[t.replace(" ", "_")] = {"value": value, "confidence": conf}
+        data[t.replace(" ", "_")] = {
+            "value": value,
+            "confidence": conf
+        }
 
     return data
-
 
 # --------------------------------------------------
 # ULTRASOUND EXTRACTION
@@ -150,13 +256,31 @@ def extract_nipt(text):
 def extract_ultrasound(text):
     data = {}
 
-    efw, found = extract_number_anchor(text, ["estimated fetal weight", "efw", "fetal weight"])
+    # Estimated Fetal Weight
+    efw, found, had_comma = extract_number_anchor(
+        text,
+        ["estimated fetal weight", "efw", "fetal weight"]
+    )
     valid = efw is not None and 300 <= efw <= 5000
-    data["estimated_fetal_weight"] = {"value": efw if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
 
-    fhr, found = extract_number_anchor(text, ["fetal heart rate", "fhr","Fetal Heart Rate"])
+    data["estimated_fetal_weight"] = {
+        "value": efw if valid else None,
+        "confidence": conf
+    }
+
+    # Fetal Heart Rate
+    fhr, found, had_comma = extract_number_anchor(
+        text,
+        ["fetal heart rate", "fhr"]
+    )
     valid = fhr is not None and 80 <= fhr <= 200
-    data["fetal_heart_rate"] = {"value": fhr if valid else None, "confidence": confidence(found, valid)}
+    conf = confidence(found, valid, had_comma)
+
+    data["fetal_heart_rate"] = {
+        "value": fhr if valid else None,
+        "confidence": conf
+    }
 
     # Fetal Position → Binary
     if "cephalic" in text:
@@ -169,12 +293,17 @@ def extract_ultrasound(text):
     # Fetal Movement → Binary
     if "normal movement" in text or "fetal movement normal" in text:
         data["fetal_movement"] = {"value": 0, "confidence": "HIGH"}
-    elif "reduced movement" in text or "absent movement" in text or "movement reduced" in text:
+    elif (
+        "reduced movement" in text
+        or "absent movement" in text
+        or "movement reduced" in text
+    ):
         data["fetal_movement"] = {"value": 1, "confidence": "HIGH"}
     else:
         data["fetal_movement"] = {"value": None, "confidence": "LOW"}
 
     return data
+
 # --------------------------------------------------
 # URINE REPORT EXTRACTION (BINARY NORMALIZED)
 # --------------------------------------------------
@@ -229,13 +358,12 @@ def extract_all(ocr_text: str):
     text = normalize_text(ocr_text)
 
     result = {}
-    result.update(extract_cbc(text))
-    result.update(extract_glucose_tsh(text))
-    result.update(extract_nipt(text))
-    result.update(extract_ultrasound(text))
-    result.update(extract_urine(text))
+
+    safe_update(result, extract_cbc(text))
+    safe_update(result, extract_glucose_tsh(text))
+    safe_update(result, extract_nipt(text))
+    safe_update(result, extract_ultrasound(text))
+    safe_update(result, extract_urine(text))
 
     return result
 
-
-#forward this result to an endpoint http://localhost:8000/report-json
