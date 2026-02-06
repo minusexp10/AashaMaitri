@@ -1,6 +1,6 @@
 # # Sample .env  
 # Location: backend/.env  
-# Database Configuration
+# Sample Database Configuration
 DB_HOST=localhost  
 DB_USER=root  
 DB_PASSWORD=12345  
