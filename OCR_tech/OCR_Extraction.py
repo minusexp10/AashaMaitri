@@ -236,3 +236,6 @@ def extract_all(ocr_text: str):
     result.update(extract_urine(text))
 
     return result
+
+
+#forward this result to an endpoint http://localhost:8000/report-json

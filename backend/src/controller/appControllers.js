@@ -2,6 +2,7 @@ const pool = require('../config/db')
 const bcrypt = require('bcrypt')
 
 
+
 exports.add_patients = async(req, res) =>{
     try{
         //asha_id
@@ -90,15 +91,5 @@ exports.delete_patient = async(req, res) =>{
     } catch(error){
         console.log(error)
         res.status(500).json({message:"Unable to fetch patients"})
-    }
-}
-
-
-exports.upload = async(req, res) =>{
-    try{
-
-    }catch(error){
-        console.log(error)
-        res.status(500).json({message:"Unable to upload files"})
     }
 }
