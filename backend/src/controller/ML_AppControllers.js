@@ -27,7 +27,11 @@ exports.uploadController = async (req, res) => {
                 fastapi: response.data
             });
         }
-
+        let i = 0
+        while(i<results.length){
+            console.log(results[i].fastapi.extracted_fields)
+            i++
+        }
         res.json({
             message: "All files processed",
             count: results.length,
