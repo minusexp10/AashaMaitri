@@ -351,16 +351,79 @@ def extract_urine(text):
 # --------------------------------------------------
 # MAIN PIPELINE
 # --------------------------------------------------
+# --------------------------------------------------
+# REPORT TYPE DETECTION (CONTENT BASED)
+# --------------------------------------------------
+def detect_report_type_from_content(text: str):
+    text = normalize_text(text)
+
+    report_keywords = {
+        "cbc": [
+            "hemoglobin", "platelet", "wbc", "rbc",
+            "hematocrit", "complete blood count", "pcv","hct"
+        ],
+        "ultrasound": [
+            "fetal heart rate", "fetal movement",
+            "estimated fetal weight", "efw",
+            "presentation", "cephalic", "breech"
+        ],
+        "nipt": [
+            "trisomy 21", "trisomy 18",
+            "trisomy 13", "fetal fraction",
+            "cell free dna"
+        ],
+        "urine": [
+            "urine", "protein", "transparency",
+            "color", "pus cells"
+        ],
+        "blood": [
+            "blood glucose", "tsh",
+            "thyroid stimulating hormone"
+        ]
+    }
+
+    scores = {}
+
+    for report_type, keywords in report_keywords.items():
+        score = sum(1 for kw in keywords if kw in text)
+        scores[report_type] = score
+
+    detected_type = max(scores, key=scores.get)
+
+    if scores[detected_type] == 0:
+        return "unknown"
+
+    return detected_type
+
+
+# --------------------------------------------------
+# ROUTED EXTRACTION
+# --------------------------------------------------
 def extract_all(ocr_text: str):
+    """
+    This now performs content-based routing.
+    Only the relevant extractor will run.
+    """
+
     text = normalize_text(ocr_text)
+    report_type = detect_report_type_from_content(text)
 
-    result = {}
+    if report_type == "cbc":
+        return extract_cbc(text)
 
-    safe_update(result, extract_cbc(text))
-    safe_update(result, extract_glucose_tsh(text))
-    safe_update(result, extract_nipt(text))
-    safe_update(result, extract_ultrasound(text))
-    safe_update(result, extract_urine(text))
+    elif report_type == "ultrasound":
+        return extract_ultrasound(text)
 
-    return result
+    elif report_type == "nipt":
+        return extract_nipt(text)
+
+    elif report_type == "urine":
+        return extract_urine(text)
+
+    elif report_type == "blood":
+        return extract_glucose_tsh(text)
+
+    else:
+        return {}
+
 
