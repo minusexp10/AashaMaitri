@@ -68,13 +68,13 @@ def extract_number_anchor(text, keyword_list, lookahead=6):
 
 
 def safe_update(base, new):
-    for key, value in new.items():
-        if key not in base:
-            base[key] = value
+    for group, fields in new.items():
+        if group not in base:
+            base[group] = fields
         else:
-            # Do not overwrite existing valid values
-            if base[key]["value"] is None and value["value"] is not None:
-                base[key] = value
+            for key, value in fields.items():
+                if key not in base[group] or base[group][key]["value"] is None:
+                    base[group][key] = value
     return base
 
 # --------------------------------------------------
@@ -184,7 +184,7 @@ def extract_glucose_tsh(text):
     # Blood Glucose
     glucose, found, had_comma = extract_number_anchor(
         text,
-        ["blood glucose", "glucose"]
+        ["blood glucose", "glucose","glu", "glc", "bs (blood sugar)", "bgl (blood glucose level)","plasma glucose", "serum glucose","fbs","fbc"]
     )
     valid = glucose is not None and 60 <= glucose <= 300
     conf = confidence(found, valid, had_comma)
@@ -196,7 +196,7 @@ def extract_glucose_tsh(text):
     # TSH
     tsh, found, had_comma = extract_number_anchor(
         text,
-        ["tsh", "thyroid stimulating hormone"]
+        ["tsh", "thyroid stimulating hormone","thyrotropin","s-tsh","thyroid function test"]
     )
     valid = tsh is not None and 0.01 <= tsh <= 20
     conf = confidence(found, valid, had_comma)
@@ -217,7 +217,7 @@ def extract_nipt(text):
     # Fetal Fraction
     ff, found, had_comma = extract_number_anchor(
         text,
-        ["fetal fraction", "ff"]
+        ["fetal fraction", "ff","cffdna","cell free fetal dna fraction","fetal dna percentage"]
     )
     ff = normalize_fetal_fraction(ff)
     valid = ff is not None and 0 <= ff <= 1
@@ -253,23 +253,10 @@ def extract_nipt(text):
 def extract_ultrasound(text):
     data = {}
 
-    # Estimated Fetal Weight
-    efw, found, had_comma = extract_number_anchor(
-        text,
-        ["estimated fetal weight", "efw", "fetal weight"]
-    )
-    valid = efw is not None and 300 <= efw <= 5000
-    conf = confidence(found, valid, had_comma)
-
-    data["estimated_fetal_weight"] = {
-        "value": efw if valid else None,
-        "confidence": conf
-    }
-
     # Fetal Heart Rate
     fhr, found, had_comma = extract_number_anchor(
         text,
-        ["fetal heart rate", "fhr"]
+        ["fetal heart rate", "fhr", "fh","fht","fetal cardiac activity","fhhr","fhb"]
     )
     valid = fhr is not None and 80 <= fhr <= 200
     conf = confidence(found, valid, had_comma)
@@ -360,7 +347,7 @@ def detect_report_type_from_content(text: str):
     report_keywords = {
         "cbc": [
             "hemoglobin", "platelet", "wbc", "rbc",
-            "hematocrit", "complete blood count", "pcv","hct"
+            "hematocrit", "complete blood count", "pcv", "hct"
         ],
         "ultrasound": [
             "fetal heart rate", "fetal movement",
@@ -377,7 +364,7 @@ def detect_report_type_from_content(text: str):
             "color", "pus cells"
         ],
         "blood": [
-            "blood glucose", "tsh",
+            "blood glucose", "tsh", "bs",
             "thyroid stimulating hormone"
         ]
     }
@@ -397,33 +384,43 @@ def detect_report_type_from_content(text: str):
 
 
 # --------------------------------------------------
-# ROUTED EXTRACTION
+# ROUTED + GROUPED EXTRACTION
 # --------------------------------------------------
 def extract_all(ocr_text: str):
     """
-    This now performs content-based routing.
-    Only the relevant extractor will run.
+    Content-based routing.
+    Returns grouped JSON structure.
     """
 
     text = normalize_text(ocr_text)
     report_type = detect_report_type_from_content(text)
 
     if report_type == "cbc":
-        return extract_cbc(text)
+        return {
+            "cbc": extract_cbc(text)
+        }
 
     elif report_type == "ultrasound":
-        return extract_ultrasound(text)
+        return {
+            "ultrasound": extract_ultrasound(text)
+        }
 
     elif report_type == "nipt":
-        return extract_nipt(text)
+        return {
+            "nipt": extract_nipt(text)
+        }
 
     elif report_type == "urine":
-        return extract_urine(text)
+        return {
+            "urine": extract_urine(text)
+        }
 
     elif report_type == "blood":
-        return extract_glucose_tsh(text)
+        return {
+            "blood_tests": extract_glucose_tsh(text)
+        }
 
     else:
-        return {}
-
-
+        return {
+            "unknown": {}
+        }
