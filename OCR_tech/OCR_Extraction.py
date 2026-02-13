@@ -103,7 +103,12 @@ def normalize_fetal_fraction(value):
         return value / 100
     return value
 
-
+def normalize_wbc(value):
+    if value is None:
+        return None
+    if value > 1:
+        return value/1000
+    return value
 # --------------------------------------------------
 # CBC EXTRACTION
 # --------------------------------------------------
@@ -127,7 +132,8 @@ def extract_cbc(text):
         text,
         ["wbc", "leukocyte","total leukocyte count","wbc count","white blood cell count","leukocycte count","tlc"]
     )
-    valid = wbc is not None and 1000 <= wbc <= 30000
+    wbc=normalize_wbc(wbc)
+    valid = wbc is not None and 2 <= wbc <= 18
     conf = confidence(found, valid, had_comma)
     data["wbc"] = {
         "value": wbc if valid else None,
