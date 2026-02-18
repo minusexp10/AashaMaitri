@@ -27,19 +27,49 @@ exports.uploadController = async (req, res) => {
                 fastapi: response.data
             });
         }
-        let i = 0
-        while(i<results.length){
-            console.log(results[i].fastapi.extracted_fields)
-            i++
+
+        var ocr_payload = {}
+
+        for (let key in results) {
+
+            let extracted = results[key].fastapi.extracted_fields;
+
+            for (let key1 in extracted) {
+
+                let extracted1 = extracted[key1];
+
+                ocr_payload[key1] = {};   // create cbc / ultrasound object
+
+                for (let key2 in extracted1) {
+
+                    ocr_payload[key1][key2] = {};  // FIXED HERE
+
+                    let extracted2 = extracted1[key2];
+
+                    for (let key3 in extracted2) {
+
+                        ocr_payload[key1][key2][key3] = extracted2[key3];  // FIXED HERE
+                    }
+                }
+            }
         }
-        res.json({
+
+        const response = {
             message: "All files processed",
+            redirectTo: '/ocrvalues',
             count: results.length,
-            results
-        });
+            ocr_payload
+        }
+        req.session.ocrData = response.ocr_payload
+
+        res.redirect('/app/ocrvalues')
 
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Image upload failed" });
     }
 };
+
+
+
+

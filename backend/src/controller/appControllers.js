@@ -93,3 +93,21 @@ exports.delete_patient = async(req, res) =>{
         res.status(500).json({message:"Unable to fetch patients"})
     }
 }
+
+exports.receiveOCR = async (req, res) => {
+    try {
+        const data = req.session;
+
+        if (!data) {
+            return res.redirect("/upload"); // safety fallback
+        }
+
+        console.log("Session data:", data);
+
+        res.status(200).json({"ocr":{ data }});
+
+    } catch (error) {
+        console.log("Unable to receive OCR values");
+        res.status(500).send("Something went wrong");
+    }
+};

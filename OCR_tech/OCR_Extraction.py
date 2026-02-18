@@ -281,7 +281,7 @@ def extract_ultrasound(text):
         data["fetal_position"] = {"value": None, "confidence": "LOW"}
 
     # Fetal Movement → Binary
-    if "normal movement" in text or "fetal movement normal" in text:
+    if "normal movement" in text or "fetal movement normal" in text or "present" in text:
         data["fetal_movement"] = {"value": 0, "confidence": "HIGH"}
     elif (
         "reduced movement" in text
