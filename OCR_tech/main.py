@@ -6,6 +6,7 @@ import pytesseract
 import io
 import traceback
 
+
 from OCR_Extraction import extract_all, safe_update
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"

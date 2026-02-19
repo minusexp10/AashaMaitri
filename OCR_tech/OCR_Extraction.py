@@ -352,33 +352,67 @@ def detect_report_type_from_content(text: str):
 
     report_keywords = {
         "cbc": [
+            # Report name variations
+            "cbc", "complete blood count", "blood count analysis",
+            "blood count report", "hematology report","complete blood test","hematology profile"
+            "full blood count"
+            # Content markers
             "hemoglobin", "platelet", "wbc", "rbc",
-            "hematocrit", "complete blood count", "pcv", "hct"
+            "hematocrit", "pcv", "hct"
         ],
+
         "ultrasound": [
+            # Report name variations
+            "ultrasound", "sonography", "usg",
+            "obstetric scan", "anomaly scan",
+            "fetal scan", "pregnancy scan",
+
+            # Content markers
             "fetal heart rate", "fetal movement",
             "estimated fetal weight", "efw",
-            "presentation", "cephalic", "breech"
+            "presentation", "cephalic", "breech",
+            "fetal position"
         ],
+
         "nipt": [
+            # Report name variations
+            "nipt", "non invasive prenatal test",
+            "cell free dna test", "cffdna report","fetal dna screening test","chromosomal screening test"
+            "non invasive genetic test"
+            # Content markers
             "trisomy 21", "trisomy 18",
             "trisomy 13", "fetal fraction",
             "cell free dna"
         ],
+
         "urine": [
-            "urine", "protein", "transparency",
+            # Report name variations
+            "urine routine", "urine examination",
+            "urinalysis", "urine report","urinalysis","routine urine screening","urine health check"
+
+            # Content markers
+            "protein", "transparency",
             "color", "pus cells"
         ],
+
         "blood": [
-            "blood glucose", "tsh", "bs",
-            "thyroid stimulating hormone"
+            # Report name variations
+            "blood sugar report", "glucose report",
+            "thyroid report", "tft report","diabetes screening test","blood sugar level test"
+            "blood sugar test"
+            # Content markers
+            "blood glucose", "tsh",
+            "thyroid stimulating hormone", "bs"
         ]
     }
 
     scores = {}
 
     for report_type, keywords in report_keywords.items():
-        score = sum(1 for kw in keywords if kw in text)
+        score = 0
+        for kw in keywords:
+            if kw in text:
+                score += 1
         scores[report_type] = score
 
     detected_type = max(scores, key=scores.get)
