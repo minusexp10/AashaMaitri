@@ -2,7 +2,8 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import API from "../api/api"
 
-export default function Login() {
+export default function Signup() {
+    const [name, setName] = useState("")
     const [phone, setPhone] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
@@ -11,6 +12,10 @@ export default function Login() {
     const navigate = useNavigate()
 
     const validate = () => {
+        if (name.length < 3) {
+            return "Name must be at least 3 characters"
+        }
+
         if (!/^[0-9]{10}$/.test(phone)) {
             return "Enter a valid 10-digit phone number"
         }
@@ -22,7 +27,7 @@ export default function Login() {
         return ""
     }
 
-    const handleLogin = async () => {
+    const handleSignup = async () => {
         const validationError = validate()
         if (validationError) {
             setError(validationError)
@@ -33,20 +38,17 @@ export default function Login() {
             setLoading(true)
             setError("")
 
-            const response = await API.post("/login", {
+            await API.post("/signup", {
+                name,
                 phone,
                 password
             })
 
-            localStorage.setItem("token", response.data.token)
-            localStorage.setItem("asha_id", response.data.asha_id)
-            localStorage.setItem("asha_name", response.data.name)
-
-            navigate("/dashboard")
+            navigate("/")
 
         } catch (error) {
             setError(
-                error.response?.data?.message || "Invalid phone or password"
+                error.response?.data?.message || "Signup failed"
             )
         } finally {
             setLoading(false)
@@ -59,18 +61,31 @@ export default function Login() {
             <div className="w-full max-w-md backdrop-blur-md bg-white/70 border border-white/40 p-8 rounded-2xl shadow-2xl">
 
                 <div className="text-center mb-6">
-                    <h1 className="text-3xl font-bold text-[#6D4EDB] tracking-tight">
-                        AashaMaitri
+                    <h1 className="text-3xl font-bold text-[#6D4EDB]">
+                        Create ASHA Account
                     </h1>
                     <p className="text-sm text-gray-600 mt-2">
-                        Tech-Enabled Maternal Health Platform
+                        Register to access maternal health dashboard
                     </p>
                 </div>
 
                 <div className="space-y-4">
 
                     <div>
-                        <label className="text-sm text-gray-700 font-medium">
+                        <label className="text-sm font-medium text-gray-700">
+                            Full Name
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Enter Your Name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#C8B6FF]"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-gray-700">
                             Phone Number
                         </label>
                         <input
@@ -78,12 +93,12 @@ export default function Login() {
                             placeholder="Enter Phone Number"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8B6FF]"
+                            className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#C8B6FF]"
                         />
                     </div>
 
                     <div>
-                        <label className="text-sm text-gray-700 font-medium">
+                        <label className="text-sm font-medium text-gray-700">
                             Password
                         </label>
                         <input
@@ -91,7 +106,7 @@ export default function Login() {
                             placeholder="Enter Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8B6FF]"
+                            className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#C8B6FF]"
                         />
                     </div>
 
@@ -100,24 +115,24 @@ export default function Login() {
                     )}
 
                     <button
-                        onClick={handleLogin}
+                        onClick={handleSignup}
                         disabled={loading}
-                        className={`w-full font-semibold py-2.5 rounded-lg shadow-md transition duration-300 ${
+                        className={`w-full py-2.5 rounded-lg transition ${
                             loading
                                 ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-[#7B5EEC] hover:bg-[#6D4EDB] text-white"
+                                : "bg-[#7B5EEC] text-white hover:bg-[#6D4EDB]"
                         }`}
                     >
-                        {loading ? "Logging in..." : "Login"}
+                        {loading ? "Creating Account..." : "Sign Up"}
                     </button>
 
-                    <p className="text-center text-sm text-gray-600 mt-4">
-                        New ASHA worker?{" "}
+                    <p className="text-center text-sm text-gray-600 mt-3">
+                        Already have an account?{" "}
                         <span
-                            onClick={() => navigate("/signup")}
+                            onClick={() => navigate("/")}
                             className="text-[#6D4EDB] font-semibold cursor-pointer hover:underline"
                         >
-                            Create Account
+                            Login
                         </span>
                     </p>
 
