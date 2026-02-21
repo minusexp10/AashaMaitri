@@ -1,82 +1,97 @@
-const pool = require('../config/db')
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
+const pool = require('../config/db');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
+// Ideally keep it in .env
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey"; 
 
-exports.signup = async(req, res) => {
-    try{
-        console.log(req.body)
-        const {name, phone, password} = req.body;
+exports.signup = async (req, res) => {
+  try {
+    const { name, phone, password } = req.body;
 
-        //empty phone or password check
-        if(!name || !phone || !password)
-            return res
-                    .status(400)
-                    .json({message:"Phone No, name and password required"})
+    if (!name || !phone || !password)
+      return res.status(400).json({
+        message: "Phone No, name and password required"
+      });
 
-        const [existing] = await pool.query(
-            "SELECT 1 FROM ASHA WHERE phone = ?", 
-            [phone]
-        )
+    const [existing] = await pool.query(
+      "SELECT 1 FROM ASHA WHERE phone = ?",
+      [phone]
+    );
 
-        if(existing.length > 0)
-            return res
-                    .status(409)
-                    .json({message:"Mobile number already registered"})
-        
-        //hash the password
-        const hashedPassword = await bcrypt.hash(password, 10)
+    if (existing.length > 0)
+      return res.status(409).json({
+        message: "Mobile number already registered"
+      });
 
-        await pool.query(
-            "INSERT INTO ASHA (name , phone , password_hash) VALUES(?,?,?)",
-            [name, phone, hashedPassword]
-        )
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-        return res
-                .status(200)
-                .json({message:"Signup successful"})
-    } catch(error) {
-        console.log(error)
-        return res
-                .status(500)
-                .json({message:"Server error"})
-    }
-}
+    await pool.query(
+      "INSERT INTO ASHA (name, phone, password_hash) VALUES (?, ?, ?)",
+      [name, phone, hashedPassword]
+    );
+
+    // Optional: auto-login after signup
+    const token = jwt.sign(
+      { phone },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(200).json({
+      message: "Signup successful",
+      token
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 exports.login = async (req, res) => {
-    try{
-        const{phone, password} = req.body;
+  try {
+    const { phone, password } = req.body;
 
-        //check if username exists and compare password with hash
-        const [users] = await pool.query(
-            "SELECT id, name, password_hash FROM ASHA WHERE phone = ?",
-            [phone]
-        )
+    const [users] = await pool.query(
+      "SELECT id, name, phone, password_hash FROM ASHA WHERE phone = ?",
+      [phone]
+    );
 
-        const user = users[0]
-        if(users.length == 0)
-            return res
-                    .status(401)
-                    .json({message:"Invalid phone number or password"})
+    if (users.length == 0)
+      return res.status(401).json({
+        message: "Invalid phone number or password"
+      });
 
-        const isMatch = await bcrypt.compare(password, user.password_hash)
+    const user = users[0];
 
-        if(!isMatch)
-            return res
-                    .status(401)
-                    .json({
-                        message:"Invalid username or password"
-                    })
+    const isMatch = await bcrypt.compare(password, user.password_hash);
 
-        res.json({
-            message:"Login Successful",
-            asha_id:user.id
-        })
-    } catch(error){
-        console.log(error)
-        return res
-                .status(500)
-                .json({message:"Server error"
-                })
-    }
-}
+    if (!isMatch)
+      return res.status(401).json({
+        message: "Invalid phone number or password"
+      });
+
+    // Create JWT token
+    const token = jwt.sign(
+      {
+        id: user.id,
+        name: user.name,
+        phone: user.phone
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      message: "Login Successful",
+      asha_id: user.id,
+      name: user.name,
+      token
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
