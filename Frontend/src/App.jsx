@@ -3,6 +3,9 @@ import Login from "./pages/Login"
 import Dashboard from "./pages/Dashboard"
 import Signup from "./pages/Signup"
 import ProtectedRoute from "./component/ProtectedRoute"
+import PatientsPage from "./pages/PatientPage"
+import RegisterPatient from "./pages/RegisterPatient"
+
 
 function App() {
   return (
@@ -13,11 +16,13 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
-              <Dashboard />
-              </ProtectedRoute>
+
+            <Dashboard />
+
           }
         />
+        <Route path="/patients" element={<PatientsPage />} />
+        <Route path="/patients/register" element={<RegisterPatient />} />
       </Routes>
     </BrowserRouter>
   )
