@@ -33,7 +33,7 @@ export default function Login() {
             setLoading(true)
             setError("")
 
-            const response = await API.post("/login", {
+            const response = await API.post("/auth/login", {
                 phone,
                 password
             })

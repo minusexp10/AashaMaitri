@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Sidebar from "../component/Sidebar"
 import {
@@ -28,7 +28,8 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const res = await API.get("/get_patients")
+        const res = await API.get("/auth/get_patients")
+        console.log(res)
         setPatients(res.data || [])
       } catch (err) {
         console.error("Failed to fetch patients", err)

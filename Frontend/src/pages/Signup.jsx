@@ -38,7 +38,7 @@ export default function Signup() {
             setLoading(true)
             setError("")
 
-            await API.post("/signup", {
+            await API.post("/auth/signup", {
                 name,
                 phone,
                 password

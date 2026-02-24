@@ -1,3 +1,7 @@
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
+
 exports.auth = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
 
@@ -6,8 +10,11 @@ exports.auth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;  // now available in routes
+
+    req.asha_id = decoded.id;   // Attach only user ID
+
     next();
+
   } catch (error) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }

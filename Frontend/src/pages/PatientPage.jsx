@@ -15,7 +15,7 @@ export default function PatientsPage() {
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const res = await API.get("/get_patients")
+        const res = await API.get("/auth/get_patients")
         setPatients(res.data || [])
       } catch (error) {
         console.error(error)
