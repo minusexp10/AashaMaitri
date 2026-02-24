@@ -10,9 +10,9 @@ exports.auth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-
+    
     req.asha_id = decoded.id;   // Attach only user ID
-
+    // console.log(req.asha_id)
     next();
 
   } catch (error) {

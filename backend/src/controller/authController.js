@@ -101,18 +101,28 @@ exports.add_patient = async(req, res) =>{
         //asha_id
 
         //check for empty or invalid entry
-        console.log("in add_patient")
-        console.log(req.body)
+        // console.log("in add_patient")
+        // console.log(req.body)
         const 
-            {asha_id, name, phone, aadhaar, age, region, no_kids, no_miscarriages, mother_blood_grp, father_blood_grp}
+            {asha_id, name, phone, aadhaar, age, mother_blood_grp}
              = req.body;
-
+        var 
+          {region, no_kids, no_miscarriages, father_blood_grp}
+          =req.body;
         //check for invalid phone no
         if(phone.length > 10){
             return res
                     .status(500)
                     .json({message:"Invalid phone number"})
         }
+        if(father_blood_grp == "")
+          father_blood_grp = null
+        if(region == "")
+          region = null
+        if(no_kids == "")
+          no_kids = null
+        if(no_miscarriages == "")
+          no_miscarriages = null
 
         //check if patient already exists
         const hashed_aadhaar = await bcrypt.hash(aadhaar, 10)
@@ -142,8 +152,9 @@ exports.add_patient = async(req, res) =>{
 exports.get_patients = async(req, res) =>{
     try{
         // console.log(req.body)
-        const {asha_id} = req.asha_id;
-        
+        // console.log("in get patients")
+        const asha_id = req.asha_id;
+        // console.log(asha_id)
         const rows = await pool.query(
             "SELECT * FROM PATIENT WHERE ASHA_ID = ?",
             [asha_id]

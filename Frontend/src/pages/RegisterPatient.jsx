@@ -31,13 +31,27 @@ export default function RegisterPatient() {
   const handleSubmit = async (e) => {
   e.preventDefault()
 
-  if (!formData.name || !formData.phone || !formData.aadhaar || !formData.age) {
-    setError("Please fill all required fields.")
-    return
-  }
+    // Required validation
+    if (!formData.name || !formData.phone || !formData.aadhaar || !formData.age) {
+      setError("Please fill all required fields.")
+      return
+    }      else if(formData.father_blood_grp == ""){
+        formData.father_blood_grp = null
+        return
+    }
+      else if(formData.region == ""){
+        formData.region = null
+        return}
+      else if(formData.no_kids == ""){
+        formData.no_kids = null
+        return}
+      else if(formData.no_miscarriages == ""){
+        formData.no_miscarriages = null
+        return}
 
-  try {
-    setLoading(true)
+    try {
+
+      setLoading(true)
 
     // Clean optional fields
     const cleanedData = {
