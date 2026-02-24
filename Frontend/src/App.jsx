@@ -5,7 +5,7 @@ import Signup from "./pages/Signup"
 import ProtectedRoute from "./component/ProtectedRoute"
 import PatientsPage from "./pages/PatientPage"
 import RegisterPatient from "./pages/RegisterPatient"
-
+import UploadReports from "./pages/UploadReports"
 
 function App() {
   return (
@@ -23,6 +23,7 @@ function App() {
         />
         <Route path="/patients" element={<PatientsPage />} />
         <Route path="/patients/register" element={<RegisterPatient />} />
+        <Route path="/upload" element={<UploadReports />} />
       </Routes>
     </BrowserRouter>
   )

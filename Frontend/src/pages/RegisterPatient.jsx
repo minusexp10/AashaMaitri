@@ -35,19 +35,7 @@ export default function RegisterPatient() {
     if (!formData.name || !formData.phone || !formData.aadhaar || !formData.age) {
       setError("Please fill all required fields.")
       return
-    }      else if(formData.father_blood_grp == ""){
-        formData.father_blood_grp = null
-        return
-    }
-      else if(formData.region == ""){
-        formData.region = null
-        return}
-      else if(formData.no_kids == ""){
-        formData.no_kids = null
-        return}
-      else if(formData.no_miscarriages == ""){
-        formData.no_miscarriages = null
-        return}
+    }     
 
     try {
 

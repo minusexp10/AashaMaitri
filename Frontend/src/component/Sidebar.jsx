@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom"
 import { LayoutDashboard, Users, AlertTriangle, FileText, X } from "lucide-react"
 
-export default function Sidebar({ isOpen, setIsOpen }) {
+export default function Sidebar({ isOpen = false, setIsOpen = () => {} }) {
   const navigate = useNavigate()
   const location = useLocation()
 
