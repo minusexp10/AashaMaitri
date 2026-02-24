@@ -1,8 +1,43 @@
 import { useNavigate } from "react-router-dom"
 import Sidebar from "../component/Sidebar"
 import { Plus, ArrowLeft } from "lucide-react"
+import { useEffect, useState } from "react"
+import API from "../api/api"
+
 export default function PatientsPage() {
   const navigate = useNavigate()
+  const [patients, setPatients] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [riskFilter, setRiskFilter] = useState("All")
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const res = await API.get("/get_patients")
+        setPatients(res.data || [])
+      } catch (error) {
+        console.error(error)
+        setErrorMsg("Failed to load patients.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPatients()
+  }, [])
+
+  const filteredPatients = patients.filter((p) => {
+    const matchesSearch =
+      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.phone?.includes(searchQuery)
+
+    const matchesRisk =
+      riskFilter === "All" || p.risk_level === riskFilter
+
+    return matchesSearch && matchesRisk
+  })
 
   return (
     <div className="min-h-screen flex bg-[#F8F7FF]">
@@ -69,24 +104,30 @@ export default function PatientsPage() {
 
         {/* Quick Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MiniStat title="Total" value="24" />
-          <MiniStat title="High Risk" value="3" color="text-red-500" />
-          <MiniStat title="Medium Risk" value="6" color="text-amber-500" />
-          <MiniStat title="Low Risk" value="15" color="text-green-500" />
+          <MiniStat title="Total" value={patients.length} />
+          <MiniStat title="High Risk" value={patients.filter(p => p.risk_level === "High").length} color="text-red-500" />
+          <MiniStat title="Medium Risk" value={patients.filter(p => p.risk_level === "Medium").length} color="text-amber-500" />
+          <MiniStat title="Low Risk" value={patients.filter(p => p.risk_level === "Low").length} color="text-green-500" />
         </div>
 
         {/* Search + Filter Bar */}
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 justify-between">
           <input
             placeholder="Search by name or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C8B6FF] w-full md:w-80"
           />
 
-          <select className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
-            <option>All Risk Levels</option>
-            <option>High Risk</option>
-            <option>Medium Risk</option>
-            <option>Low Risk</option>
+          <select
+            value={riskFilter}
+            onChange={(e) => setRiskFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+          >
+            <option value="All">All Risk Levels</option>
+            <option value="High">High Risk</option>
+            <option value="Medium">Medium Risk</option>
+            <option value="Low">Low Risk</option>
           </select>
         </div>
 
@@ -101,9 +142,33 @@ export default function PatientsPage() {
             <div>Last Visit</div>
           </div>
 
-          <PatientRow name="Sunita Devi" phone="9876543210" risk="High" date="12 Feb 2026" />
-          <PatientRow name="Rekha Sharma" phone="9123456780" risk="Medium" date="10 Feb 2026" />
-          <PatientRow name="Pooja Patel" phone="9988776655" risk="Low" date="08 Feb 2026" />
+          {loading ? (
+            <div className="p-6 text-gray-500 text-sm">
+              Loading patients...
+            </div>
+          ) : errorMsg ? (
+            <div className="p-6 text-red-500 text-sm">
+              {errorMsg}
+            </div>
+          ) : filteredPatients.length === 0 ? (
+            <div className="p-6 text-gray-500 text-sm">
+              No matching patients found.
+            </div>
+          ) : (
+            filteredPatients.map((patient) => (
+              <PatientRow
+                key={patient._id}
+                name={patient.name}
+                phone={patient.phone}
+                risk={patient.risk_level || "Low"}
+                date={
+                  patient.createdAt
+                    ? new Date(patient.createdAt).toLocaleDateString()
+                    : "-"
+                }
+              />
+            ))
+          )}
 
         </div>
 
@@ -129,8 +194,8 @@ function PatientRow({ name, phone, risk, date }) {
     risk === "High"
       ? "bg-red-100 text-red-600"
       : risk === "Medium"
-      ? "bg-amber-100 text-amber-600"
-      : "bg-green-100 text-green-600"
+        ? "bg-amber-100 text-amber-600"
+        : "bg-green-100 text-green-600"
 
   return (
     <div className="border-t border-gray-100">
