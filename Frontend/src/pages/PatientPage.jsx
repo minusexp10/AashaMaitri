@@ -16,7 +16,12 @@ export default function PatientsPage() {
     const fetchPatients = async () => {
       try {
         const res = await API.get("/auth/get_patients")
-        setPatients(res.data || [])
+        const normalized = (res.data || []).map(p => ({
+          ...p,
+          risk_level: p.risk_level?.toLowerCase()
+        }))
+
+        setPatients(normalized)
       } catch (error) {
         console.error(error)
         setErrorMsg("Failed to load patients.")
@@ -34,7 +39,7 @@ export default function PatientsPage() {
       p.phone?.includes(searchQuery)
 
     const matchesRisk =
-      riskFilter === "All" || p.risk_level === riskFilter
+      riskFilter === "all" || p.risk_level === riskFilter
 
     return matchesSearch && matchesRisk
   })
@@ -124,10 +129,10 @@ export default function PatientsPage() {
             onChange={(e) => setRiskFilter(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
           >
-            <option value="All">All Risk Levels</option>
-            <option value="High">High Risk</option>
-            <option value="Medium">Medium Risk</option>
-            <option value="Low">Low Risk</option>
+            <option value="all">All Risk Levels</option>
+            <option value="high">High Risk</option>
+            <option value="medium">Medium Risk</option>
+            <option value="low">Low Risk</option>
           </select>
         </div>
 

@@ -29,45 +29,38 @@ export default function RegisterPatient() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+  e.preventDefault()
 
-    // Required validation
-    if (!formData.name || !formData.phone || !formData.aadhaar || !formData.age) {
-      setError("Please fill all required fields.")
-      return
-    }      else if(formData.father_blood_grp == ""){
-        formData.father_blood_grp = null
-        return
-    }
-      else if(formData.region == ""){
-        formData.region = null
-        return}
-      else if(formData.no_kids == ""){
-        formData.no_kids = null
-        return}
-      else if(formData.no_miscarriages == ""){
-        formData.no_miscarriages = null
-        return}
-
-    try {
-
-      setLoading(true)
-
-      await axios.post("/auth/add_patient", {
-        ...formData,
-        asha_id: ashaId
-      })
-
-      navigate("/patients")
-
-    } catch (err) {
-      console.error(err)
-      setError(err.response?.data?.message || "Registration failed.")
-    }
-    finally {
-      setLoading(false)
-    }
+  if (!formData.name || !formData.phone || !formData.aadhaar || !formData.age) {
+    setError("Please fill all required fields.")
+    return
   }
+
+  try {
+    setLoading(true)
+
+    // Clean optional fields
+    const cleanedData = {
+      ...formData,
+      region: formData.region || null,
+      no_kids: formData.no_kids || null,
+      no_miscarriages: formData.no_miscarriages || null,
+      father_blood_grp: formData.father_blood_grp || null,
+      mother_blood_grp: formData.mother_blood_grp || null,
+      asha_id: ashaId
+    }
+
+    await axios.post("/auth/add_patient", cleanedData)
+
+    navigate("/patients")
+
+  } catch (err) {
+    console.error(err)
+    setError(err.response?.data?.message || "Registration failed.")
+  } finally {
+    setLoading(false)
+  }
+}
 
   return (
     <div className="min-h-screen flex bg-[#F8F7FF]">
