@@ -7,6 +7,5 @@ node_modules/
 # Python
 __pycache__/
 venv/
-maternal_risk_model.pkl
 MODEL/maternal_data.csv
 Frontend/public
