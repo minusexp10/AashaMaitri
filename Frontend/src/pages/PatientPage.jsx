@@ -18,9 +18,8 @@ export default function PatientsPage() {
         const res = await API.get("/auth/get_patients")
         const normalized = (res.data || []).map(p => ({
           ...p,
-          risk_level: p.risk_level?.toLowerCase()
+          risk_level: p.risk_level?.toLowerCase() || "low"   // normalize null/undefined
         }))
-
         setPatients(normalized)
       } catch (error) {
         console.error(error)
@@ -62,10 +61,9 @@ export default function PatientsPage() {
           md:justify-between 
           gap-6">
 
-          {/* Left Side: Back + Text */}
+          {/* Left Side */}
           <div className="space-y-3">
 
-            {/* Back Button */}
             <button
               onClick={() => navigate("/dashboard")}
               className="group flex items-center gap-2 text-sm text-gray-600 hover:text-[#6D4EDB] transition"
@@ -78,7 +76,6 @@ export default function PatientsPage() {
               <span className="sm:hidden">Back</span>
             </button>
 
-            {/* Text Section */}
             <div className="space-y-2">
               <h1 className="text-2xl md:text-3xl font-semibold text-gray-800">
                 Patients Information
@@ -90,7 +87,7 @@ export default function PatientsPage() {
 
           </div>
 
-          {/* Responsive CTA (UNCHANGED STYLE) */}
+          {/* CTA */}
           <button
             onClick={() => navigate("/patients/register")}
             className="w-full md:w-auto bg-linear-to-r 
@@ -107,7 +104,7 @@ export default function PatientsPage() {
 
         </div>
 
-        {/* Quick Summary */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MiniStat title="Total" value={patients.length} />
 
@@ -130,7 +127,7 @@ export default function PatientsPage() {
           />
         </div>
 
-        {/* Search + Filter Bar */}
+        {/* Search + Filter */}
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 justify-between">
           <input
             placeholder="Search by name or phone..."
@@ -151,7 +148,7 @@ export default function PatientsPage() {
           </select>
         </div>
 
-        {/* Patient Table */}
+        {/* Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
           {/* Desktop Header */}
@@ -163,27 +160,21 @@ export default function PatientsPage() {
           </div>
 
           {loading ? (
-            <div className="p-6 text-gray-500 text-sm">
-              Loading patients...
-            </div>
+            <div className="p-6 text-gray-500 text-sm">Loading patients...</div>
           ) : errorMsg ? (
-            <div className="p-6 text-red-500 text-sm">
-              {errorMsg}
-            </div>
+            <div className="p-6 text-red-500 text-sm">{errorMsg}</div>
           ) : filteredPatients.length === 0 ? (
-            <div className="p-6 text-gray-500 text-sm">
-              No matching patients found.
-            </div>
+            <div className="p-6 text-gray-500 text-sm">No matching patients found.</div>
           ) : (
             filteredPatients.map((patient) => (
               <PatientRow
-                key={patient._id}
+                key={patient.id}
                 name={patient.name}
                 phone={patient.phone}
-                risk={patient.risk_level || "Low"}
+                risk={patient.risk_level || "low"}
                 date={
-                  patient.createdAt
-                    ? new Date(patient.createdAt).toLocaleDateString()
+                  patient.record_date
+                    ? new Date(patient.record_date).toLocaleDateString()
                     : "-"
                 }
               />
@@ -202,25 +193,23 @@ function MiniStat({ title, value, color = "text-[#6D4EDB]" }) {
   return (
     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
       <p className="text-xs text-gray-500">{title}</p>
-      <p className={`text-lg font-semibold mt-1 ${color}`}>
-        {value}
-      </p>
+      <p className={`text-lg font-semibold mt-1 ${color}`}>{value}</p>
     </div>
   )
 }
 
 function PatientRow({ name, phone, risk, date }) {
   const riskColor =
-    risk === "High"
+    risk === "high"
       ? "bg-red-100 text-red-600"
-      : risk === "Medium"
+      : risk === "medium"
         ? "bg-amber-100 text-amber-600"
         : "bg-green-100 text-green-600"
 
   return (
     <div className="border-t border-gray-100">
 
-      {/* Desktop Layout */}
+      {/* Desktop */}
       <div className="hidden md:grid grid-cols-4 px-6 py-4 text-sm hover:bg-gray-50 transition">
         <div className="text-gray-700">{name}</div>
         <div className="text-gray-500">{phone}</div>
@@ -232,9 +221,8 @@ function PatientRow({ name, phone, risk, date }) {
         <div className="text-gray-500">{date}</div>
       </div>
 
-      {/* Mobile Layout */}
+      {/* Mobile */}
       <div className="md:hidden p-4 space-y-3 hover:bg-gray-50 transition">
-
         <div className="flex justify-between items-center">
           <p className="font-medium text-gray-800">{name}</p>
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${riskColor}`}>
@@ -246,7 +234,6 @@ function PatientRow({ name, phone, risk, date }) {
           <span>{phone}</span>
           <span>{date}</span>
         </div>
-
       </div>
 
     </div>
