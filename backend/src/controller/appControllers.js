@@ -1,6 +1,6 @@
 const pool = require('../config/db')
 const bcrypt = require('bcrypt')
-
+const axios = require("axios")
 
 
 
@@ -59,6 +59,16 @@ exports.receiveOCR = async (req, res) => {
         }
         console.log(ml_payload)
 
+        const ml_risk = await axios.post(
+            "http://127.0.0.1:8000/predict-risk",
+            ml_payload,   // 👈 SEND DATA
+            {
+                headers: {
+                "Content-Type": "application/json"
+                }
+            }
+            )
+        console.log(ml_risk.data)
 
         res.status(200).json({"ocr":{ data }});
 

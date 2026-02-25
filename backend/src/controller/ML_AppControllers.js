@@ -17,7 +17,7 @@ exports.uploadController = async (req, res) => {
             });
 
             const response = await axios.post(
-                "http://127.0.0.1:8000/ocr/extract",
+                "http://127.0.0.1:8001/ocr/extract",
                 form,
                 { headers: form.getHeaders() }
             );
@@ -53,6 +53,7 @@ exports.uploadController = async (req, res) => {
                 }
             }
         }
+        console.log(ocr_payload)
 
         const response = {
             message: "All files processed",
