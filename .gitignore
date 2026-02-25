@@ -9,3 +9,6 @@ __pycache__/
 venv/
 MODEL/maternal_data.csv
 Frontend/public
+
+#Testing
+test_reports
