@@ -10,7 +10,7 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
-  const [riskFilter, setRiskFilter] = useState("All")
+  const [riskFilter, setRiskFilter] = useState("all")
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -110,9 +110,24 @@ export default function PatientsPage() {
         {/* Quick Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MiniStat title="Total" value={patients.length} />
-          <MiniStat title="High Risk" value={patients.filter(p => p.risk_level === "High").length} color="text-red-500" />
-          <MiniStat title="Medium Risk" value={patients.filter(p => p.risk_level === "Medium").length} color="text-amber-500" />
-          <MiniStat title="Low Risk" value={patients.filter(p => p.risk_level === "Low").length} color="text-green-500" />
+
+          <MiniStat
+            title="High Risk"
+            value={patients.filter(p => p.risk_level === "high").length}
+            color="text-red-500"
+          />
+
+          <MiniStat
+            title="Medium Risk"
+            value={patients.filter(p => p.risk_level === "medium").length}
+            color="text-amber-500"
+          />
+
+          <MiniStat
+            title="Low Risk"
+            value={patients.filter(p => p.risk_level === "low").length}
+            color="text-green-500"
+          />
         </div>
 
         {/* Search + Filter Bar */}
