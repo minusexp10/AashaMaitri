@@ -23,8 +23,11 @@ export default function UploadReports() {
     "wbc"
   ]
 
+
   const handleFileChange = (e) => {
-    setFiles(e.target.files)
+    const selectedFiles = Array.from(e.target.files)
+
+    setFiles((prev) => [...prev, ...selectedFiles])
   }
 
   const handleUpload = async () => {
@@ -160,10 +163,13 @@ export default function UploadReports() {
         {/* Upload Section */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
 
-          <label className="block border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-[#6D4EDB] transition">
-            <UploadCloud className="mx-auto text-gray-400" size={28} />
+          <label className="block border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-[#6D4EDB] transition group">
+            <UploadCloud className="mx-auto text-gray-400 group-hover:text-[#6D4EDB]" size={28} />
             <p className="text-sm text-gray-500 mt-2">
               Click to upload multiple reports
+            </p>
+            <p className="text-xs text-gray-400">
+              You can select multiple files at once
             </p>
             <input
               type="file"
@@ -188,6 +194,37 @@ export default function UploadReports() {
             <p className="text-red-500 text-sm">{error}</p>
           )}
         </div>
+
+        {files.length > 0 && (
+          <div className="space-y-3 mt-4">
+
+            <p className="text-sm font-medium text-gray-700">
+              Uploaded Files ({files.length})
+            </p>
+
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {files.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center bg-gray-50 border border-gray-200 px-4 py-2 rounded-lg text-sm"
+                >
+                  <span className="truncate max-w-[70%]">
+                    {file.name}
+                  </span>
+
+                  <button
+                    onClick={() => {
+                      setFiles(files.filter((_, i) => i !== index))
+                    }}
+                    className="text-red-500 hover:text-red-600 text-xs"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Review Section */}
         {extractedData && (
