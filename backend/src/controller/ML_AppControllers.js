@@ -60,10 +60,8 @@ exports.uploadController = async (req, res) => {
             count: results.length,
             ocr_payload
         }
-        req.session.ocrData = response.ocr_payload
-
-        res.redirect('/app/ocrvalues')
-
+      res.status(200).json(response.ocr_payload)
+      
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Image upload failed" });

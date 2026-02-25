@@ -56,13 +56,41 @@ export default function UploadReports() {
         return
       }
 
-      // Create structured object
-      const structuredData = {}
-      expectedFields.forEach((field) => {
-        structuredData[field] = backendData[field] ?? ""
+      const flatData = {}
+
+      Object.values(backendData).forEach((section) => {
+        if (typeof section === "object") {
+          Object.entries(section).forEach(([key, obj]) => {
+            if (obj && typeof obj === "object" && "value" in obj) {
+              flatData[key] = {
+                value: obj.value,
+                confidence: obj.confidence || "UNKNOWN"
+              }
+            }
+          })
+        }
       })
 
-      setExtractedData(structuredData)
+      // Manual fields (no confidence)
+      const manualFields = [
+        "weight",
+        "total_pregnancies",
+        "systolic_bp",
+        "diastolic_bp",
+        "bodytemp",
+        "heartrate"
+      ]
+
+      manualFields.forEach((field) => {
+        if (!(field in flatData)) {
+          flatData[field] = {
+            value: "",
+            confidence: "MANUAL"
+          }
+        }
+      })
+
+      setExtractedData(flatData)
 
     } catch (err) {
       console.error(err)
@@ -163,28 +191,67 @@ export default function UploadReports() {
 
         {/* Review Section */}
         {extractedData && (
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+          <div className="space-y-8">
 
-            <h2 className="text-lg font-semibold text-gray-800">
-              Review Extracted Values
-            </h2>
+            {/* ---------- GENERIC VITALS ---------- */}
+            <Section title="Patient Vitals (Manual Entry)">
+              <Grid>
+                <InputField name="weight" label="Weight (kg)" data={extractedData} setData={setExtractedData} />
+                <InputField name="total_pregnancies" label="Total Pregnancies" data={extractedData} setData={setExtractedData} />
+                <InputField name="systolic_bp" label="Systolic BP" data={extractedData} setData={setExtractedData} />
+                <InputField name="diastolic_bp" label="Diastolic BP" data={extractedData} setData={setExtractedData} />
+                <InputField name="bodytemp" label="Body Temperature" data={extractedData} setData={setExtractedData} />
+                <InputField name="heartrate" label="Heart Rate" data={extractedData} setData={setExtractedData} />
+              </Grid>
+            </Section>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {expectedFields.map((field) => (
-                <div key={field}>
-                  <label className="text-sm text-gray-600 block mb-1 capitalize">
-                    {field.replace("_", " ")}
-                  </label>
+            {/* ---------- CBC ---------- */}
+            <Section title="CBC Report">
+              <Grid>
+                <InputField name="hemoglobin" label="Hemoglobin" data={extractedData} setData={setExtractedData} />
+                <InputField name="wbc" label="WBC" data={extractedData} setData={setExtractedData} />
+                <InputField name="rbc" label="RBC" data={extractedData} setData={setExtractedData} />
+                <InputField name="platelets" label="Platelets" data={extractedData} setData={setExtractedData} />
+                <InputField name="hct" label="HCT" data={extractedData} setData={setExtractedData} />
+              </Grid>
+            </Section>
 
-                  <input
-                    name={field}
-                    value={extractedData[field]}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#C8B6FF]"
-                  />
-                </div>
-              ))}
-            </div>
+            {/* ---------- BLOOD GLUCOSE ---------- */}
+            <Section title="Blood Glucose Report">
+              <Grid>
+                <InputField name="blood_glucose" label="Blood Glucose" data={extractedData} setData={setExtractedData} />
+                <InputField name="tsh" label="TSH" data={extractedData} setData={setExtractedData} />
+              </Grid>
+            </Section>
+
+            {/* ---------- ULTRASOUND ---------- */}
+            <Section title="Ultrasound Report">
+              <Grid>
+                <InputField name="fetal_position" label="Fetal Position" data={extractedData} setData={setExtractedData} />
+                <InputField name="fetal_movement" label="Fetal Movement" data={extractedData} setData={setExtractedData} />
+                <InputField name="fetal_heart_rate" label="Fetal Heart Rate" data={extractedData} setData={setExtractedData} />
+              </Grid>
+            </Section>
+
+            {/* ---------- URINE ---------- */}
+            <Section title="Urine Report">
+              <Grid>
+                <InputField name="urine_transparency" label="Urine Transparency" data={extractedData} setData={setExtractedData} />
+                <InputField name="urine_glucose" label="Urine Glucose" data={extractedData} setData={setExtractedData} />
+                <InputField name="urine_protein" label="Urine Protein" data={extractedData} setData={setExtractedData} />
+                <InputField name="urine_color" label="Urine Color" data={extractedData} setData={setExtractedData} />
+              </Grid>
+            </Section>
+
+            {/* ---------- NIPT ---------- */}
+            <Section title="NIPT Report">
+              <Grid>
+                <InputField name="fetal_fraction" label="Fetal Fraction" data={extractedData} setData={setExtractedData} />
+                <InputField name="trisomy_21" label="Trisomy 21" data={extractedData} setData={setExtractedData} />
+                <InputField name="trisomy_18" label="Trisomy 18" data={extractedData} setData={setExtractedData} />
+                <InputField name="trisomy_13" label="Trisomy 13" data={extractedData} setData={setExtractedData} />
+              </Grid>
+            </Section>
 
             <div className="flex justify-end">
               <button
@@ -195,16 +262,88 @@ export default function UploadReports() {
               </button>
             </div>
 
-            {riskResult && (
-              <div className="bg-purple-50 text-purple-700 p-4 rounded-xl">
-                Predicted Risk Level: <strong>{riskResult}</strong>
-              </div>
-            )}
-
           </div>
         )}
 
       </div>
+    </div>
+
+  )
+}
+function Section({ title, children }) {
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+      <h2 className="text-lg font-semibold text-gray-800 border-b pb-2">
+        {title}
+      </h2>
+      {children}
+    </div>
+  )
+}
+
+function Grid({ children }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {children}
+    </div>
+  )
+}
+
+function InputField({ name, label, data, setData }) {
+
+  const field = data[name] || { value: "", confidence: "UNKNOWN" }
+  const value = field.value
+  const confidence = field.confidence
+
+  const isMedicalAbnormal = () => {
+    if (name === "hemoglobin" && value && Number(value) < 11) return true
+    if (name === "platelets" && value && Number(value) < 150) return true
+    if (name === "blood_glucose" && value && Number(value) > 140) return true
+    return false
+  }
+
+  const getConfidenceStyle = () => {
+    if (confidence === "LOW") return "bg-red-100 text-red-600"
+    if (confidence === "MEDIUM") return "bg-yellow-100 text-yellow-600"
+    if (confidence === "HIGH") return "bg-green-100 text-green-600"
+    if (confidence === "MANUAL") return "bg-blue-100 text-blue-600"
+    return "bg-gray-100 text-gray-500"
+  }
+
+  const getBorderStyle = () => {
+    if (confidence === "LOW") return "border-red-400 bg-red-50"
+    if (confidence === "MEDIUM") return "border-yellow-400 bg-yellow-50"
+    if (isMedicalAbnormal()) return "border-red-400 bg-red-50"
+    return "border-gray-200"
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between items-center">
+        <label className="text-sm text-gray-600">
+          {label}
+        </label>
+
+        <span className={`text-xs px-2 py-1 rounded-full font-medium ${getConfidenceStyle()}`}>
+          {confidence}
+        </span>
+      </div>
+
+      <input
+        value={value}
+        onChange={(e) =>
+          setData({
+            ...data,
+            [name]: {
+              ...field,
+              value: e.target.value
+            }
+          })
+        }
+        className={`w-full px-4 py-2 rounded-xl text-sm border
+          focus:ring-2 focus:ring-[#C8B6FF] transition
+          ${getBorderStyle()}`}
+      />
     </div>
   )
 }
