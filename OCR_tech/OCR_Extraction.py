@@ -262,7 +262,7 @@ def extract_ultrasound(text):
     # Fetal Heart Rate
     fhr, found, had_comma = extract_number_anchor(
         text,
-        ["fetal heart rate", "fhr", "fh","fht","fetal cardiac activity","fhhr","fhb"]
+        ["fetal heart rate", "fhr", "fh","fht","fetal cardiac activity","fhhr","fhb", "frequency"]
     )
     valid = fhr is not None and 80 <= fhr <= 200
     conf = confidence(found, valid, had_comma)

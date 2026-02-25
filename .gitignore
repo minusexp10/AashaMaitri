@@ -10,3 +10,6 @@ venv/
 maternal_risk_model.pkl
 MODEL/maternal_data.csv
 Frontend/public
+
+#Testing
+test_reports

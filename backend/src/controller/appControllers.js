@@ -45,8 +45,20 @@ exports.receiveOCR = async (req, res) => {
         if (!data) {
             return res.redirect("/upload"); // safety fallback
         }
+        
+        const response = req.body;
+        // console.log(response)
+        let ml_payload = {}
 
-        console.log("Session data:", data);
+        for(let key in response){
+            // console.log(key)
+            if(response[key].value == null || response[key].value == '')
+                ml_payload[key] = 0
+            else
+                ml_payload[key] = response[key].value
+        }
+        console.log(ml_payload)
+
 
         res.status(200).json({"ocr":{ data }});
 
