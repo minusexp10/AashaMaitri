@@ -159,7 +159,7 @@ exports.get_patients = async(req, res) =>{
             "SELECT * FROM PATIENT WHERE ASHA_ID = ?",
             [asha_id]
         )
-        // console.log(rows)
+        // console.log(rows[0])
         res.status(200).json(rows[0])
     } catch(error){
         console.log(error)
