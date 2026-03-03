@@ -299,6 +299,36 @@ export default function UploadReports() {
               </button>
             </div>
 
+            {riskResult && (
+              <div className={`p-6 rounded-2xl border shadow-sm
+    ${riskResult === "HIGH"
+                  ? "bg-red-50 border-red-300"
+                  : riskResult === "MEDIUM"
+                    ? "bg-yellow-50 border-yellow-300"
+                    : "bg-green-50 border-green-300"}
+  `}>
+                <h3 className="text-lg font-semibold mb-2">
+                  Risk Prediction Result
+                </h3>
+
+                <p className={`text-xl font-bold
+      ${riskResult === "HIGH"
+                    ? "text-red-600"
+                    : riskResult === "MEDIUM"
+                      ? "text-yellow-600"
+                      : "text-green-600"}
+    `}>
+                  {riskResult} RISK
+                </p>
+
+                {riskResult === "HIGH" && (
+                  <p className="text-sm text-red-500 mt-2">
+                    Immediate medical attention recommended.
+                  </p>
+                )}
+              </div>
+            )}
+
           </div>
         )}
 

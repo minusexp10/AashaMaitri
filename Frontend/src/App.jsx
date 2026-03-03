@@ -6,6 +6,7 @@ import ProtectedRoute from "./component/ProtectedRoute"
 import PatientsPage from "./pages/PatientPage"
 import RegisterPatient from "./pages/RegisterPatient"
 import UploadReports from "./pages/UploadReports"
+import HighRiskPage from "./pages/HighRiskPage"
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/patients" element={<PatientsPage />} />
         <Route path="/patients/register" element={<RegisterPatient />} />
         <Route path="/upload" element={<UploadReports />} />
+        <Route path="/high-risk" element={<HighRiskPage />} />
       </Routes>
     </BrowserRouter>
   )
