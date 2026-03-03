@@ -119,7 +119,8 @@ export default function UploadReports() {
         numericData[key] = isNaN(value) ? value : Number(value)
       })
 
-      const res = await API.post("/app/receive_ocr", numericData)
+      const res = await API.post("/app/receive_risk", numericData)
+      console.log(res.data.risk)
 
       setRiskResult(res.data.risk)
 
