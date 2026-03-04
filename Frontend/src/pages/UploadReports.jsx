@@ -3,6 +3,7 @@ import Sidebar from "../component/Sidebar"
 import API from "../api/api"
 import { ArrowLeft, UploadCloud } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 
 export default function UploadReports() {
   const navigate = useNavigate()
@@ -118,9 +119,13 @@ export default function UploadReports() {
         const value = extractedData[key]
         numericData[key] = isNaN(value) ? value : Number(value)
       })
-
-      const res = await API.post("/app/receive_risk", numericData)
-      console.log(res.data.risk)
+      const reportId = localStorage.getItem("reportId")
+      // console.log(reportId)
+      const res = await API.post("/auth/receive_risk", {
+        report_id: reportId,
+        data: numericData
+      })
+      // console.log(res.data.risk)
 
       setRiskResult(res.data.risk)
 

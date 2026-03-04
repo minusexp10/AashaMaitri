@@ -53,7 +53,7 @@ exports.uploadController = async (req, res) => {
                 }
             }
         }
-        console.log(ocr_payload)
+        // console.log(ocr_payload)
 
         const response = {
             message: "All files processed",

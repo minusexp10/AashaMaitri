@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const {get_patient_from_phone, receiveOCR, receive_risk, high_risk} = require('../controller/appControllers')
+const {get_patient_from_phone, receiveOCR} = require('../controller/appControllers')
 const { uploadController } = require('../controller/ML_AppControllers');
 
 // Multer setup (MUST be here or in a separate middleware file)
@@ -14,7 +14,5 @@ router.get('/get_patient_from_phone', get_patient_from_phone)
 // router.post('/delete_patient', delete_patient)
 router.post('/upload', uploadMiddleware.array('report'), uploadController);
 router.post('/receive_ocr', receiveOCR)
-router.post("/receive_risk", receive_risk)
-router.get('/high_risk', high_risk)
 
 module.exports = router;

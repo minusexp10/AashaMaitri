@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const axios = require('axios')
 
 // Ideally keep it in .env
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey"; 
@@ -163,6 +164,90 @@ exports.get_patients = async(req, res) =>{
         res.status(200).json(rows[0])
     } catch(error){
         console.log(error)
+        res.status(500).json({message:"Unable to fetch patients"})
+    }
+}
+
+exports.upload_patient = async(req, res) => {
+  try{
+    const [row] = await pool.query(
+      "SELECT id, asha_id FROM PATIENT WHERE PHONE = ?",
+      [req.patientPhone]
+    )
+    // console.log(row[0])
+    const {id: patient_id, asha_id} = row[0] //returns id, asha_id.... Here id is the patient id
+
+    // console.log(patient_id, asha_id)
+    const result = await pool.query(
+      "INSERT IGNORE INTO REPORT (PATIENT_ID, ASHA_ID) VALUES (?,?)",
+      [patient_id, asha_id]
+    )
+    const reportId = result[0].insertId
+    // console.log(reportId)
+    res.status(200).json({message:"OK", reportId:reportId})
+  } catch(error){
+    console.log(error)
+    console.log("Unable to upload")
+    res.status(500).json({message:"Unable to upload for the given patient"})
+  }
+}
+
+exports.receive_risk = async(req, res) => {
+    try{
+        // console.log(req.body)
+        const { report_id, data } = req.body;
+        const response = data;
+        let ml_payload = {}
+
+        for(let key in response){
+            // console.log(key)
+            if(response[key].value == null || response[key].value == '')
+                ml_payload[key] = 0
+            else
+                ml_payload[key] = response[key].value
+        }
+        // console.log(ml_payload)
+        const ml_risk = await axios.post(
+                "http://127.0.0.1:8000/predict-risk",
+                ml_payload,   // 👈 SEND DATA
+                {
+                    headers: {
+                    "Content-Type": "application/json"
+                    }
+                }
+                )
+        // console.log(ml_risk.data)
+        // console.log(report_id)
+        await pool.query(
+          "UPDATE report SET risk = ? WHERE id = ?",
+          [ml_risk.data.risk_level, report_id]
+        )
+        // console.log("DB Risk updated")
+        res.status(200).json({"risk" : ml_risk.data.risk_level})
+    } catch(error){
+        console.log(error)
+        console.log("Unable to predict risk");
+        res.status(500).send("Something went wrong");
+    }
+
+}
+
+exports.high_risk = async(req, res) =>{
+    try{
+      // console.log(req.asha_id)
+        const [rows] = await pool.query(
+          `
+          SELECT p.name, p.phone, r.risk
+          FROM REPORT r
+          JOIN PATIENT p ON r.patient_id = p.id
+          WHERE r.asha_id = ? AND r.risk = ?
+          `,
+          [req.asha_id, "MEDIUM"]
+        )
+        // console.log(rows[0])
+        res.status(200).json(rows)
+    } catch(error){
+        console.log("Unable to fetch high risk cases")
         res.status(500).json({message:"Unable to fetch patients"})
     }
 }

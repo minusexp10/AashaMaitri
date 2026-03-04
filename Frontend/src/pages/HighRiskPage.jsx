@@ -12,13 +12,10 @@ export default function HighRiskPage() {
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const res = await API.get("/get_patients")
+        const res = await API.get("auth/high_risk")
+        console.log(res.data)
 
-        const highRiskPatients = res.data.filter(
-          (patient) => patient.risk_level === "HIGH"
-        )
-
-        setPatients(highRiskPatients)
+        setPatients(res.data)
 
       } catch (err) {
         console.error(err)
@@ -57,23 +54,21 @@ export default function HighRiskPage() {
         ) : (
           <div className="space-y-4">
             {patients.map((patient) => (
-              <div
-                key={patient._id}
-                className="bg-white p-5 rounded-xl border border-red-200 shadow-sm"
-              >
-                <h3 className="font-semibold text-gray-800">
-                  {patient.name}
-                </h3>
+          <div
+            key={patient.phone}
+            className="bg-white p-5 rounded-xl border border-red-200 shadow-sm"
+          >
+            <h3 className="font-semibold text-gray-800">{patient.name}</h3>
 
-                <p className="text-sm text-gray-500">
-                  Phone: {patient.phone}
-                </p>
+            <p className="text-sm text-gray-500">
+              Phone: {patient.phone}
+            </p>
 
-                <p className="text-sm text-red-600 font-medium mt-2">
-                  HIGH RISK
-                </p>
-              </div>
-            ))}
+            <p className="text-sm text-red-600 font-medium mt-2">
+              HIGH RISK
+            </p>
+          </div>
+        ))}
           </div>
         )}
 

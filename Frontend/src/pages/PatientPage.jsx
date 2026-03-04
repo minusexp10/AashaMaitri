@@ -152,11 +152,12 @@ export default function PatientsPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
           {/* Desktop Header */}
-          <div className="hidden md:grid grid-cols-4 bg-gray-50 px-6 py-3 text-sm font-medium text-gray-600">
+          <div className="hidden md:grid grid-cols-5 bg-gray-50 px-6 py-3 text-sm font-medium text-gray-600">
             <div>Name</div>
             <div>Phone</div>
             <div>Risk Level</div>
             <div>Last Visit</div>
+            <div>Upload</div>
           </div>
 
           {loading ? (
@@ -199,32 +200,78 @@ function MiniStat({ title, value, color = "text-[#6D4EDB]" }) {
 }
 
 function PatientRow({ name, phone, risk, date }) {
+
+  const navigate = useNavigate()
+  const [uploading, setUploading] = useState(false)
+
   const riskColor =
     risk === "high"
       ? "bg-red-100 text-red-600"
       : risk === "medium"
-        ? "bg-amber-100 text-amber-600"
-        : "bg-green-100 text-green-600"
+      ? "bg-amber-100 text-amber-600"
+      : "bg-green-100 text-green-600"
+
+  const handleUpload = async () => {
+    if (uploading) return
+
+    try {
+      setUploading(true)
+
+      const res = await API.post("/auth/upload_patient", {
+        phone: phone
+      })
+
+      const reportId = res.data.reportId
+      if (res.status === 200 && res.data.message === "OK") {
+        // console.log(res.data.reportId)
+        localStorage.setItem("reportId", reportId)
+        navigate("/upload")
+      }
+
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <div className="border-t border-gray-100">
 
       {/* Desktop */}
-      <div className="hidden md:grid grid-cols-4 px-6 py-4 text-sm hover:bg-gray-50 transition">
+      <div className="hidden md:grid grid-cols-5 px-6 py-4 text-sm hover:bg-gray-50 transition">
         <div className="text-gray-700">{name}</div>
         <div className="text-gray-500">{phone}</div>
+
         <div>
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${riskColor}`}>
             {risk}
           </span>
         </div>
+
         <div className="text-gray-500">{date}</div>
+
+        <div>
+          <button
+            onClick={handleUpload}
+            disabled={uploading}
+            className={`px-3 py-1 rounded-lg text-xs text-white transition
+              ${uploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#6D4EDB] hover:opacity-90"
+              }`}
+          >
+            {uploading ? "Uploading..." : "Upload"}
+          </button>
+        </div>
       </div>
 
       {/* Mobile */}
       <div className="md:hidden p-4 space-y-3 hover:bg-gray-50 transition">
+
         <div className="flex justify-between items-center">
           <p className="font-medium text-gray-800">{name}</p>
+
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${riskColor}`}>
             {risk}
           </span>
@@ -234,6 +281,19 @@ function PatientRow({ name, phone, risk, date }) {
           <span>{phone}</span>
           <span>{date}</span>
         </div>
+
+        <button
+          onClick={handleUpload}
+          disabled={uploading}
+          className={`px-3 py-1 rounded-lg text-xs text-white transition
+            ${uploading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-[#6D4EDB]"
+            }`}
+        >
+          {uploading ? "Uploading..." : "Upload"}
+        </button>
+
       </div>
 
     </div>

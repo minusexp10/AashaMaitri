@@ -29,7 +29,7 @@ export default function Dashboard() {
     const fetchPatients = async () => {
       try {
         const res = await API.get("/auth/get_patients")
-        console.log(res)
+        // console.log(res)
         setPatients(res.data || [])
       } catch (err) {
         console.error("Failed to fetch patients", err)
