@@ -157,7 +157,17 @@ exports.get_patients = async(req, res) =>{
         const asha_id = req.asha_id;
         // console.log(asha_id)
         const rows = await pool.query(
-            "SELECT * FROM PATIENT WHERE ASHA_ID = ?",
+            `
+            SELECT 
+                patient.*,
+                report.id AS report_id,
+                report.risk,
+                report.report_date
+            FROM patient
+            JOIN report 
+            ON patient.id = report.patient_id
+            WHERE report.asha_id = 11;
+            `,
             [asha_id]
         )
         // console.log(rows[0])
@@ -168,27 +178,57 @@ exports.get_patients = async(req, res) =>{
     }
 }
 
-exports.upload_patient = async(req, res) => {
-  try{
-    const [row] = await pool.query(
-      "SELECT id, asha_id FROM PATIENT WHERE PHONE = ?",
-      [req.patientPhone]
-    )
-    // console.log(row[0])
-    const {id: patient_id, asha_id} = row[0] //returns id, asha_id.... Here id is the patient id
+exports.upload_patient = async (req, res) => {
+  try {
 
-    // console.log(patient_id, asha_id)
-    const result = await pool.query(
-      "INSERT IGNORE INTO REPORT (PATIENT_ID, ASHA_ID) VALUES (?,?)",
+    const phone = req.patientPhone
+
+    // Get patient
+    const [patients] = await pool.query(
+      "SELECT id, asha_id FROM PATIENT WHERE PHONE = ?",
+      [phone]
+    )
+
+    if (!patients.length) {
+      return res.status(404).json({
+        message: "Patient not found"
+      })
+    }
+
+    const { id: patient_id, asha_id } = patients[0]
+
+    // Try inserting report (ignored if already exists)
+    const [insertResult] = await pool.query(
+      "INSERT IGNORE INTO REPORT (PATIENT_ID, ASHA_ID) VALUES (?, ?)",
       [patient_id, asha_id]
     )
-    const reportId = result[0].insertId
-    // console.log(reportId)
-    res.status(200).json({message:"OK", reportId:reportId})
-  } catch(error){
-    console.log(error)
-    console.log("Unable to upload")
-    res.status(500).json({message:"Unable to upload for the given patient"})
+
+    let reportId
+
+    if (insertResult.insertId) {
+      // New report created
+      reportId = insertResult.insertId
+    } else {
+      // Report already existed → fetch its id
+      const [existing] = await pool.query(
+        "SELECT id FROM REPORT WHERE PATIENT_ID = ? AND ASHA_ID = ?",
+        [patient_id, asha_id]
+      )
+
+      reportId = existing[0].id
+    }
+
+    return res.status(200).json({
+      message: "OK",
+      reportId
+    })
+
+  } catch (error) {
+    console.error("Upload patient error:", error)
+
+    return res.status(500).json({
+      message: "Unable to upload for the given patient"
+    })
   }
 }
 
@@ -217,7 +257,7 @@ exports.receive_risk = async(req, res) => {
                 }
                 )
         // console.log(ml_risk.data)
-        // console.log(report_id)
+        console.log(report_id)
         await pool.query(
           "UPDATE report SET risk = ? WHERE id = ?",
           [ml_risk.data.risk_level, report_id]
@@ -242,7 +282,7 @@ exports.high_risk = async(req, res) =>{
           JOIN PATIENT p ON r.patient_id = p.id
           WHERE r.asha_id = ? AND r.risk = ?
           `,
-          [req.asha_id, "MEDIUM"]
+          [req.asha_id, "HIGH"]
         )
         // console.log(rows[0])
         res.status(200).json(rows)

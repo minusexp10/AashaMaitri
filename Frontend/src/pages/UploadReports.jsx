@@ -67,7 +67,7 @@ export default function UploadReports() {
           Object.entries(section).forEach(([key, obj]) => {
             if (obj && typeof obj === "object" && "value" in obj) {
               flatData[key] = {
-                value: obj.value,
+                value: obj.value ?? "",
                 confidence: obj.confidence || "UNKNOWN"
               }
             }
@@ -88,7 +88,7 @@ export default function UploadReports() {
       manualFields.forEach((field) => {
         if (!(field in flatData)) {
           flatData[field] = {
-            value: "",
+            value: "" ?? "",
             confidence: "MANUAL"
           }
         }

@@ -13,7 +13,7 @@ export default function HighRiskPage() {
     const fetchPatients = async () => {
       try {
         const res = await API.get("auth/high_risk")
-        console.log(res.data)
+        // console.log(res.data)
 
         setPatients(res.data)
 

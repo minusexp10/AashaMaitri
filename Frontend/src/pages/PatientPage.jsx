@@ -6,6 +6,7 @@ import API from "../api/api"
 
 export default function PatientsPage() {
   const navigate = useNavigate()
+
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState("")
@@ -16,10 +17,12 @@ export default function PatientsPage() {
     const fetchPatients = async () => {
       try {
         const res = await API.get("/auth/get_patients")
-        const normalized = (res.data || []).map(p => ({
+
+        const normalized = (res.data || []).map((p) => ({
           ...p,
-          risk_level: p.risk_level?.toLowerCase() || "low"   // normalize null/undefined
+          risk_level: p.risk?.toLowerCase() || "prediction pending",
         }))
+
         setPatients(normalized)
       } catch (error) {
         console.error(error)
@@ -48,25 +51,24 @@ export default function PatientsPage() {
 
       <Sidebar />
 
-      <div className="flex-1 p-8 space-y-8">
+      <div className="flex-1 p-6 md:p-8 space-y-8">
 
-        {/* Header Section */}
-        <div className="bg-linear-to-r from-[#EEE9FF] to-[#F9F7FF] 
-          p-6 md:p-8 
-          rounded-2xl 
-          border border-gray-100 
-          shadow-sm 
-          flex flex-col md:flex-row 
-          md:items-center 
-          md:justify-between 
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#EEE9FF] to-[#F9F7FF]
+          p-6 md:p-8
+          rounded-2xl
+          border border-gray-100
+          shadow-sm
+          flex flex-col md:flex-row
+          md:items-center
+          md:justify-between
           gap-6">
 
-          {/* Left Side */}
           <div className="space-y-3">
 
             <button
               onClick={() => navigate("/dashboard")}
-              className="group flex items-center gap-2 text-sm text-gray-600 hover:text-[#6D4EDB] transition"
+              className="group flex items-center gap-2 text-sm text-gray-600 hover:text-[#6D4EDB]"
             >
               <ArrowLeft
                 size={18}
@@ -76,27 +78,26 @@ export default function PatientsPage() {
               <span className="sm:hidden">Back</span>
             </button>
 
-            <div className="space-y-2">
+            <div>
               <h1 className="text-2xl md:text-3xl font-semibold text-gray-800">
                 Patients Information
               </h1>
-              <p className="text-sm md:text-base text-gray-500 max-w-md">
+
+              <p className="text-sm text-gray-500">
                 Manage and monitor all registered maternal patients
               </p>
             </div>
 
           </div>
 
-          {/* CTA */}
           <button
             onClick={() => navigate("/patients/register")}
-            className="w-full md:w-auto bg-linear-to-r 
-               from-[#7B5EEC] to-[#6D4EDB]
-               text-white px-6 py-3 rounded-xl
-               font-medium shadow-md
-               hover:shadow-lg active:scale-[0.98]
-               transition-all duration-200
-               flex items-center justify-center gap-2"
+            className="w-full md:w-auto bg-gradient-to-r
+              from-[#7B5EEC] to-[#6D4EDB]
+              text-white px-6 py-3 rounded-xl
+              font-medium shadow-md
+              hover:shadow-lg active:scale-[0.98]
+              transition flex items-center justify-center gap-2"
           >
             <Plus size={18} />
             Register Patient
@@ -106,6 +107,7 @@ export default function PatientsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
           <MiniStat title="Total" value={patients.length} />
 
           <MiniStat
@@ -125,10 +127,12 @@ export default function PatientsPage() {
             value={patients.filter(p => p.risk_level === "low").length}
             color="text-green-500"
           />
+
         </div>
 
         {/* Search + Filter */}
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-4 justify-between">
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 justify-between">
+
           <input
             placeholder="Search by name or phone..."
             value={searchQuery}
@@ -139,13 +143,14 @@ export default function PatientsPage() {
           <select
             value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
           >
             <option value="all">All Risk Levels</option>
             <option value="high">High Risk</option>
             <option value="medium">Medium Risk</option>
             <option value="low">Low Risk</option>
           </select>
+
         </div>
 
         {/* Table */}
@@ -161,18 +166,27 @@ export default function PatientsPage() {
           </div>
 
           {loading ? (
-            <div className="p-6 text-gray-500 text-sm">Loading patients...</div>
+            <div className="p-6 text-gray-500 text-sm">
+              Loading patients...
+            </div>
+
           ) : errorMsg ? (
-            <div className="p-6 text-red-500 text-sm">{errorMsg}</div>
+            <div className="p-6 text-red-500 text-sm">
+              {errorMsg}
+            </div>
+
           ) : filteredPatients.length === 0 ? (
-            <div className="p-6 text-gray-500 text-sm">No matching patients found.</div>
+            <div className="p-6 text-gray-500 text-sm">
+              No matching patients found.
+            </div>
+
           ) : (
             filteredPatients.map((patient) => (
               <PatientRow
                 key={patient.id}
                 name={patient.name}
                 phone={patient.phone}
-                risk={patient.risk_level || "low"}
+                risk={patient.risk_level}
                 date={
                   patient.record_date
                     ? new Date(patient.record_date).toLocaleDateString()
@@ -189,10 +203,11 @@ export default function PatientsPage() {
   )
 }
 
+/* ---------- Components ---------- */
 
 function MiniStat({ title, value, color = "text-[#6D4EDB]" }) {
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
       <p className="text-xs text-gray-500">{title}</p>
       <p className={`text-lg font-semibold mt-1 ${color}`}>{value}</p>
     </div>
@@ -204,12 +219,16 @@ function PatientRow({ name, phone, risk, date }) {
   const navigate = useNavigate()
   const [uploading, setUploading] = useState(false)
 
+  const normalizedRisk = risk?.toLowerCase()
+
   const riskColor =
-    risk === "high"
+    normalizedRisk === "high"
       ? "bg-red-100 text-red-600"
-      : risk === "medium"
+      : normalizedRisk === "medium"
       ? "bg-amber-100 text-amber-600"
-      : "bg-green-100 text-green-600"
+      : normalizedRisk === "low"
+      ? "bg-green-100 text-green-600"
+      : "bg-gray-100 text-gray-500"
 
   const handleUpload = async () => {
     if (uploading) return
@@ -217,13 +236,11 @@ function PatientRow({ name, phone, risk, date }) {
     try {
       setUploading(true)
 
-      const res = await API.post("/auth/upload_patient", {
-        phone: phone
-      })
+      const res = await API.post("/auth/upload_patient", { phone })
 
       const reportId = res.data.reportId
+
       if (res.status === 200 && res.data.message === "OK") {
-        // console.log(res.data.reportId)
         localStorage.setItem("reportId", reportId)
         navigate("/upload")
       }
@@ -240,7 +257,9 @@ function PatientRow({ name, phone, risk, date }) {
 
       {/* Desktop */}
       <div className="hidden md:grid grid-cols-5 px-6 py-4 text-sm hover:bg-gray-50 transition">
-        <div className="text-gray-700">{name}</div>
+
+        <div className="text-gray-700 font-medium">{name}</div>
+
         <div className="text-gray-500">{phone}</div>
 
         <div>
@@ -264,6 +283,7 @@ function PatientRow({ name, phone, risk, date }) {
             {uploading ? "Uploading..." : "Upload"}
           </button>
         </div>
+
       </div>
 
       {/* Mobile */}

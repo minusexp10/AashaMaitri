@@ -15,7 +15,7 @@ exports.get_patient_from_phone = async(req, res) =>{
             "SELECT * FROM PATIENT WHERE PHONE = ?",
             [phone]
         )
-        console.log(rows)
+        // console.log(rows)
         res.status(200).json(rows[0])
     } catch(error){
         console.log(error)

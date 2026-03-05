@@ -45,7 +45,8 @@ export default function Sidebar({ isOpen = false, setIsOpen = () => {} }) {
 
         {/* Desktop Header */}
         <div className="hidden md:block mb-10">
-          <h2 className="text-2xl font-bold text-[#6D4EDB]">
+          <h2 onClick={() => navigate("/dashboard")}
+          className="text-2xl font-bold text-[#6D4EDB] cursor-pointer hover:opacity-80 transition">
             Aasha Maitri
           </h2>
           <p className="text-xs text-gray-400 mt-1">
@@ -69,12 +70,12 @@ export default function Sidebar({ isOpen = false, setIsOpen = () => {} }) {
             onClick={() => handleNavigate("/patients")}
           />
 
-          <SidebarItem
+          {/* <SidebarItem
             icon={<FileText size={18} />}
             text="Upload Reports"
             active={isActive("/upload")}
             onClick={() => handleNavigate("/upload")}
-          />
+          /> */}
 
           <SidebarItem
             icon={<AlertTriangle size={18} />}

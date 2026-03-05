@@ -1,24 +1,20 @@
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Sidebar from "../component/Sidebar"
-import {
-  Search,
-  Bell,
-  LogOut, Menu
-} from "lucide-react"
+import { Search, Bell, LogOut, Menu } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import API from "../api/api"
 
-
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
+
   const [isOpen, setIsOpen] = useState(false)
-  const { t, i18n } = useTranslation()
-  const name = localStorage.getItem("asha_name")
-  const ashaId = localStorage.getItem("asha_id")
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+
+  const name = localStorage.getItem("asha_name")
 
   const handleLogout = () => {
     localStorage.clear()
@@ -29,7 +25,6 @@ export default function Dashboard() {
     const fetchPatients = async () => {
       try {
         const res = await API.get("/auth/get_patients")
-        // console.log(res)
         setPatients(res.data || [])
       } catch (err) {
         console.error("Failed to fetch patients", err)
@@ -46,18 +41,22 @@ export default function Dashboard() {
     p.phone?.includes(searchQuery)
   )
 
+  const highRisk = patients.filter(p => p.risk?.toUpperCase() === "HIGH").length
+  const mediumRisk = patients.filter(p => p.risk?.toUpperCase() === "MEDIUM").length
+  const lowRisk = patients.filter(p => p.risk?.toUpperCase() === "LOW").length
+
   return (
     <div className="min-h-screen flex bg-[#F8F7FF]">
+
       <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
 
       <div className="flex-1 flex flex-col">
-        {/* Top Header */}
-        <header className="bg-white border-b border-gray-100 px-4 md:px-8 py-4 flex items-center justify-between">
 
-          {/* LEFT SECTION */}
+        {/* Header */}
+        <header className="bg-white border-b border-gray-100 px-6 md:px-8 py-4 flex items-center justify-between">
+
           <div className="flex items-center gap-4">
 
-            {/* Hamburger (mobile only) */}
             <Menu
               className="md:hidden cursor-pointer"
               onClick={() => setIsOpen(true)}
@@ -68,6 +67,7 @@ export default function Dashboard() {
               <h1 className="text-lg md:text-xl font-semibold text-gray-800">
                 Dashboard
               </h1>
+
               <p className="text-xs md:text-sm text-gray-500">
                 Welcome back, {name}
               </p>
@@ -75,15 +75,15 @@ export default function Dashboard() {
 
           </div>
 
-          {/* RIGHT SECTION */}
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-4">
 
-            {/* Search (hide on small screens) */}
+            {/* Search */}
             <div className="relative hidden sm:block">
               <Search
                 className="absolute left-3 top-2.5 text-gray-400"
                 size={16}
               />
+
               <input
                 placeholder="Search patients..."
                 value={searchQuery}
@@ -92,9 +92,8 @@ export default function Dashboard() {
               />
             </div>
 
-            <Bell className="text-gray-500 cursor-pointer" size={20} />
+            <Bell className="text-gray-500 cursor-pointer hover:text-gray-700" size={20} />
 
-            {/* Logout text hidden on mobile */}
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 transition"
@@ -107,73 +106,86 @@ export default function Dashboard() {
 
         </header>
 
-
         {/* Dashboard Content */}
-        <main className="p-8 space-y-8">
+        <main className="p-6 md:p-8 space-y-8">
 
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard title="Total Patients" value={patients.length} accent="bg-purple-100 text-purple-600" />
+
+            <StatCard
+              title="Total Patients"
+              value={patients.length}
+              accent="bg-purple-100 text-purple-600"
+            />
 
             <StatCard
               title="High Risk"
-              value={patients.filter(p => p.risk_level === "High").length}
+              value={highRisk}
               accent="bg-red-100 text-red-500"
             />
 
             <StatCard
               title="Medium Risk"
-              value={patients.filter(p => p.risk_level === "Medium").length}
+              value={mediumRisk}
               accent="bg-amber-100 text-amber-500"
             />
 
             <StatCard
               title="Low Risk"
-              value={patients.filter(p => p.risk_level === "Low").length}
+              value={lowRisk}
               accent="bg-green-100 text-green-500"
             />
+
           </div>
 
-          {/* Recent Activity */}
+          {/* Recent Patients */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+
+            <h2 className="text-lg font-semibold text-gray-800 mb-5">
               Recent Patients
             </h2>
 
             <div className="space-y-3">
+
               {loading ? (
                 <p className="text-sm text-gray-500">Loading patients...</p>
-              ) : patients.length === 0 ? (
+              ) : filteredPatients.length === 0 ? (
                 <p className="text-sm text-gray-500">
                   No patients registered yet.
                 </p>
               ) : (
                 filteredPatients.slice(0, 5).map((p) => (
                   <PatientRow
-                    key={p._id}
+                    key={p.id}
                     name={p.name}
-                    risk={p.risk_level || "Low"}
+                    risk={p.risk || "Prediction Pending"}
                   />
                 ))
               )}
+
             </div>
+
           </div>
 
         </main>
+
       </div>
     </div>
   )
 }
 
-/* --- Components --- */
-
+/* ---------- Components ---------- */
 
 function StatCard({ title, value, accent }) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-      <p className="text-sm text-gray-500">{title}</p>
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition">
+
+      <p className="text-sm text-gray-500">
+        {title}
+      </p>
 
       <div className="flex items-center justify-between mt-3">
+
         <p className="text-2xl font-semibold text-gray-800">
           {value}
         </p>
@@ -181,25 +193,37 @@ function StatCard({ title, value, accent }) {
         <div className={`px-3 py-1 rounded-full text-xs font-medium ${accent}`}>
           Updated
         </div>
+
       </div>
+
     </div>
   )
 }
 
 function PatientRow({ name, risk }) {
+
+  const normalizedRisk = risk?.toUpperCase()
+
   const riskColor =
-    risk === "High"
+    normalizedRisk === "HIGH"
       ? "text-red-500"
-      : risk === "Medium"
+      : normalizedRisk === "MEDIUM"
         ? "text-amber-500"
-        : "text-green-500"
+        : normalizedRisk === "LOW"
+          ? "text-green-500"
+          : "text-gray-400"
 
   return (
     <div className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 transition">
-      <p className="text-sm text-gray-700">{name}</p>
-      <p className={`text-sm font-medium ${riskColor}`}>
-        {risk} Risk
+
+      <p className="text-sm text-gray-700">
+        {name}
       </p>
+
+      <p className={`text-sm font-medium ${riskColor}`}>
+        {risk}
+      </p>
+
     </div>
   )
 }

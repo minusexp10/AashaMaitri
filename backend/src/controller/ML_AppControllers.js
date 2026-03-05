@@ -3,7 +3,7 @@ const FormData = require("form-data");   // <-- only here
 
 exports.uploadController = async (req, res) => {
     try {
-        console.log("files received:", req.files.length);
+        // console.log("files received:", req.files.length);
 
         let results = [];
 
