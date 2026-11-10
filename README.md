@@ -125,7 +125,7 @@ Extracts numbers via anchor-based parsing
 
 Normalizes units automatically
 
-Handles:
+what it Handles:
 
 Comma-separated values
 
